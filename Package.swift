@@ -6,7 +6,11 @@ let package = Package(
     platforms: [.macOS(.v13)],
     targets: [
         .target(name: "AgentBarCore"),
-        .executableTarget(name: "AgentBar", dependencies: ["AgentBarCore"]),
+        .executableTarget(
+            name: "AgentBar",
+            dependencies: ["AgentBarCore"],
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "AgentBarCoreTests", dependencies: ["AgentBarCore"]),
     ]
 )

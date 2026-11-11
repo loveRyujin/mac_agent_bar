@@ -7,8 +7,14 @@ public protocol Provider: Sendable {
     /// 稳定标识，例如 "claude-code" / "codex" / "cursor"。
     var id: String { get }
     var displayName: String { get }
+    /// 图标资源名（界面层据此加载单色 logo）；为 nil 时界面用名称首字母代替。
+    var iconName: String? { get }
     func isInstalled() -> Bool
     func fetchStatus() async throws -> SubscriptionStatus
+}
+
+extension Provider {
+    public var iconName: String? { nil }
 }
 
 /// provider 读取失败的原因，`message` 可以直接显示在界面上。
