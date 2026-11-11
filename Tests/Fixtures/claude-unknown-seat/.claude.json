@@ -1,0 +1,9 @@
+{
+  "oauthAccount": {
+    "emailAddress": "seat-user@example.com",
+    "seatTier": "team_galactic",
+    "profileFetchedAt": 1794366803153,
+    "organizationType": "claude_team",
+    "organizationName": "Example Org"
+  }
+}

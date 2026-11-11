@@ -1,0 +1,21 @@
+{
+  "numStartups": 42,
+  "projects": { "/tmp/example": { "allowedTools": [] } },
+  "oauthAccount": {
+    "accountUuid": "00000000-0000-0000-0000-000000000001",
+    "emailAddress": "team-user@example.com",
+    "organizationUuid": "00000000-0000-0000-0000-000000000002",
+    "hasExtraUsageEnabled": true,
+    "billingType": "stripe_subscription",
+    "subscriptionCreatedAt": "2026-10-02T23:23:18.102404Z",
+    "claudeCodeTrialEndsAt": null,
+    "claudeCodeTrialDurationDays": null,
+    "seatTier": "team_standard",
+    "displayName": "Example",
+    "profileFetchedAt": 1794366803153,
+    "organizationType": "claude_team",
+    "organizationRateLimitTier": "default_raven",
+    "userRateLimitTier": "default_raven",
+    "organizationName": "Example Org"
+  }
+}

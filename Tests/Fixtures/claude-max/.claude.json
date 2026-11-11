@@ -1,0 +1,13 @@
+{
+  "oauthAccount": {
+    "emailAddress": "max-user@example.com",
+    "hasExtraUsageEnabled": false,
+    "billingType": "stripe_subscription",
+    "claudeCodeTrialEndsAt": null,
+    "seatTier": null,
+    "profileFetchedAt": 1794366803153,
+    "organizationType": "claude_max",
+    "userRateLimitTier": "default_claude_max_20x",
+    "organizationName": "max-user@example.com's Organization"
+  }
+}

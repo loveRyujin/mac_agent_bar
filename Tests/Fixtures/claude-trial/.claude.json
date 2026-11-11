@@ -1,0 +1,11 @@
+{
+  "oauthAccount": {
+    "emailAddress": "trial-user@example.com",
+    "billingType": "stripe_subscription",
+    "claudeCodeTrialEndsAt": "2026-11-20T00:00:00Z",
+    "claudeCodeTrialDurationDays": 7,
+    "profileFetchedAt": 1794366803153,
+    "organizationType": "claude_pro",
+    "userRateLimitTier": "default_claude_ai"
+  }
+}
