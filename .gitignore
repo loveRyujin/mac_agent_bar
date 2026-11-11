@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# SwiftPM / 构建产物
+.build/
+.swiftpm/
+build/
+*.app
+*.dSYM/
+
+# Xcode（用 Xcode 打开 Package.swift 时生成）
+xcuserdata/
+DerivedData/
+
+# 编辑器
+.vscode/
+.idea/
+
+# Claude Code 本地设置
+.claude/settings.local.json
+
+# 本地开发流程文件：spec 与工单，只保留在本地
+.scratch/
