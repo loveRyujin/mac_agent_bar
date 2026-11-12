@@ -21,20 +21,18 @@ import Testing
 
 @Suite struct SettingsStoreTests {
     /// 每个测试用独立的 UserDefaults，互不干扰。
-    func makeStore() -> (SettingsStore, UserDefaults) {
-        let suite = "AgentBarTests-\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        return (SettingsStore(defaults: defaults), defaults)
+    func makeStore() -> (SettingsStore, TestDefaults) {
+        let test = TestDefaults()
+        return (SettingsStore(defaults: test.defaults), test)
     }
 
     @Test func nothingStoredLoadsDefaults() {
-        let (store, _) = makeStore()
+        let (store, test) = makeStore(); _ = test
         #expect(store.load() == AppSettings())
     }
 
     @Test func roundTrip() {
-        let (store, _) = makeStore()
+        let (store, test) = makeStore(); _ = test
         var settings = AppSettings()
         settings.launchAtLogin = false
         settings.refreshInterval = .fiveMinutes
@@ -49,7 +47,7 @@ import Testing
     }
 
     @Test func missingFieldsFallBackToDefaultsIndividually() {
-        let (store, defaults) = makeStore()
+        let (store, test) = makeStore(); let defaults = test.defaults
         defaults.set(Data(#"{"hideEmail": true}"#.utf8), forKey: SettingsStore.key)
 
         var expected = AppSettings()
@@ -58,7 +56,7 @@ import Testing
     }
 
     @Test func unknownValueOnlyResetsThatField() {
-        let (store, defaults) = makeStore()
+        let (store, test) = makeStore(); let defaults = test.defaults
         let json = #"{"statusBarStyle": "rainbow", "refreshInterval": 7, "expiryWarningDays": 3}"#
         defaults.set(Data(json.utf8), forKey: SettingsStore.key)
 
@@ -70,7 +68,7 @@ import Testing
     }
 
     @Test func corruptDataLoadsDefaults() {
-        let (store, defaults) = makeStore()
+        let (store, test) = makeStore(); let defaults = test.defaults
         defaults.set(Data("not json".utf8), forKey: SettingsStore.key)
         #expect(store.load() == AppSettings())
     }

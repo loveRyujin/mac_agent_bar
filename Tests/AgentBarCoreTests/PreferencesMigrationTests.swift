@@ -3,11 +3,11 @@ import Testing
 @testable import AgentBarCore
 
 @Suite struct PreferencesMigrationTests {
+    /// 测试期间持有这些对象，结束时自动清理。
+    private let pool = TestDefaultsPool()
+
     func makeDefaults() -> UserDefaults {
-        let suite = "AgentBarTests-\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suite)!
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
+        pool.make()
     }
 
     @Test func copiesKnownKeysOnce() {
@@ -44,5 +44,16 @@ import Testing
 
     @Test func nothingToMigrate() {
         #expect(PreferencesMigration.migrate(from: makeDefaults(), to: makeDefaults()) == false)
+    }
+}
+
+/// 一个测试里要多个独立 UserDefaults 时，统一持有、统一清理。
+final class TestDefaultsPool {
+    private var items: [TestDefaults] = []
+
+    func make() -> UserDefaults {
+        let item = TestDefaults()
+        items.append(item)
+        return item.defaults
     }
 }

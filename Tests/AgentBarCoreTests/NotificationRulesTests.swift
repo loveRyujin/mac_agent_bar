@@ -145,8 +145,8 @@ private func fiveHour(_ percent: Double, resets: String) -> UsageWindow {
         let high = [result("claude-code", name: "Claude Code", windows: [fiveHour(83, resets: "2026-11-12T13:10:00Z")])]
         _ = rules.evaluate(results: high + [failure()], ledger: &ledger, now: now)
 
-        let suite = "AgentBarTests-\(UUID().uuidString)"
-        let store = NotificationLedgerStore(defaults: UserDefaults(suiteName: suite)!)
+        let test = TestDefaults()
+        let store = NotificationLedgerStore(defaults: test.defaults)
         store.save(ledger)
         var restored = store.load()
 
@@ -157,7 +157,8 @@ private func fiveHour(_ percent: Double, resets: String) -> UsageWindow {
     }
 
     @Test func emptyStoreLoadsEmptyLedger() {
-        let store = NotificationLedgerStore(defaults: UserDefaults(suiteName: "AgentBarTests-\(UUID().uuidString)")!)
+        let test = TestDefaults()
+        let store = NotificationLedgerStore(defaults: test.defaults)
         #expect(store.load() == NotificationLedger())
     }
 
