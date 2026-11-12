@@ -1,5 +1,9 @@
 # NOTICE
 
+## 授权
+
+项目代码以 MIT 授权，见 `LICENSE`。下文列出的图标不在 MIT 授权范围内，按其各自的授权和商标规则使用。
+
 ## 图标
 
 `assets/icons/` 下的 SVG 及由其转换得到的 `Sources/AgentBar/Resources/*.pdf` 来自
