@@ -18,11 +18,12 @@
 ### Homebrew（推荐）
 
 ```sh
-brew install loveRyujin/agentbar/agentbar
+brew tap loveRyujin/agentbar https://github.com/loveRyujin/mac_agent_bar
+brew install agentbar
 agentbar   # 打开应用
 ```
 
-在本机从源码编译（大约一两分钟），需要 Command Line Tools（Swift 6）。应用安装在 Homebrew 的目录里；想在“应用程序”里看到它，可以按安装结束时的提示链接到 `~/Applications`。升级用 `brew upgrade agentbar`。
+在本机从源码编译（大约一两分钟），需要 Command Line Tools（Swift 6）。应用安装在 Homebrew 的目录里；想在“应用程序”里看到它，可以按安装结束时的提示链接到 `~/Applications`。升级用 `brew update && brew upgrade agentbar`。
 
 ### 下载安装包
 
@@ -56,7 +57,7 @@ scripts/bundle.sh    # 打包成 build/AgentBar.app
 
 ## 发布新版本
 
-修改 `Sources/AgentBarCore/AgentBarCore.swift` 中的版本号并提交，然后推送对应的 tag（如 `v0.2.0`）。GitHub Actions 会自动测试、打包并创建 Release。
+修改 `Sources/AgentBarCore/AgentBarCore.swift` 中的版本号并提交，然后推送对应的 tag（如 `v0.2.0`）。GitHub Actions 会自动测试、打包、创建 Release，并更新 `Formula/agentbar.rb`。
 
 ## 授权
 

@@ -54,3 +54,21 @@ Homebrew 有两种安装方式：
 - 希望用户免编译、下载即用；
 - 希望应用安装到 `/Applications`；
 - 某个核心功能必须依赖 Keychain，升级后重复授权已经影响体验。
+
+## 修订（2026-11-12）：tap 改为源码仓库本身
+
+原决策是新建 `loveRyujin/homebrew-agentbar` 仓库作为 tap，由 `release.yml` 用一个有写权限的 token 推送 formula。改为**直接把源码仓库 `loveRyujin/mac_agent_bar` 当作 tap**，formula 放在 `Formula/agentbar.rb`：
+
+```sh
+brew tap loveRyujin/agentbar https://github.com/loveRyujin/mac_agent_bar
+brew install agentbar
+```
+
+- 原因：不用多维护一个仓库，也不用创建、定期更换跨仓库的 token；`release.yml` 用 Actions 自带的 `GITHUB_TOKEN` 就能把 formula 提交到本仓库的 `main`。
+- 代价：
+  - 安装要两条命令。`brew install loveRyujin/agentbar/agentbar` 这种简写只对名为 `homebrew-*` 的仓库有效。
+  - 用户的 tap 会克隆整个源码仓库（目前很小）。
+  - 每次发版会在 `main` 上多一个“更新 formula”的提交。
+- formula 的原件仍是 `packaging/homebrew/agentbar.rb.template`，`Formula/agentbar.rb` 由 `release.yml` 生成，不手动修改。
+- 上文“后果”中“需要一个对 tap 仓库有写权限的 token”一条不再适用。
+- 官方 `homebrew-cask` 仍需 Developer ID 签名与公证，且有知名度门槛，重新评估的条件不变。

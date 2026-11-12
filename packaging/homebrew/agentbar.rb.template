@@ -1,6 +1,6 @@
 # Homebrew formula 模板（见 docs/adr/0001-homebrew-source-formula.md）。
 # 发版时由 .github/workflows/release.yml 填入 @VERSION@ 和 @SHA256@，
-# 生成 Formula/agentbar.rb 推送到 loveRyujin/homebrew-agentbar。
+# 生成本仓库的 Formula/agentbar.rb（本仓库即 tap）。
 class Agentbar < Formula
   desc "Menu bar app showing subscription and usage of local AI coding agents"
   homepage "https://github.com/loveRyujin/mac_agent_bar"
