@@ -37,6 +37,8 @@ public struct AppSettings: Sendable, Equatable {
     public var onlineUsageProviderIDs: Set<String> = []
     /// 被关闭的通知类型。存“关闭了哪些”，以后新增的类型默认开启。
     public var disabledNotificationKinds: Set<NotificationKind> = []
+    /// 通过 mmx 获取 MiniMax 用量（mmx 和 MiniMax Code 两个页签共用），默认开启。
+    public var minimaxUsageViaMmx = true
 
     public init() {}
 }
@@ -44,7 +46,7 @@ public struct AppSettings: Sendable, Equatable {
 extension AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case launchAtLogin, refreshInterval, hiddenProviderIDs, hideEmail, statusBarStyle, expiryWarningDays
-        case usageWarningThreshold, onlineUsageProviderIDs, disabledNotificationKinds
+        case usageWarningThreshold, onlineUsageProviderIDs, disabledNotificationKinds, minimaxUsageViaMmx
     }
 
     /// 缺失或无法识别的字段各自回退到默认值，不影响其他字段。
@@ -63,6 +65,7 @@ extension AppSettings: Codable {
         usageWarningThreshold = value(.usageWarningThreshold, default: usageWarningThreshold)
         onlineUsageProviderIDs = value(.onlineUsageProviderIDs, default: onlineUsageProviderIDs)
         disabledNotificationKinds = value(.disabledNotificationKinds, default: disabledNotificationKinds)
+        minimaxUsageViaMmx = value(.minimaxUsageViaMmx, default: minimaxUsageViaMmx)
     }
 }
 

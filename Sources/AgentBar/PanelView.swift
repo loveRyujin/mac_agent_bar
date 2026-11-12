@@ -199,7 +199,8 @@ private struct UsageSection: View {
                         }
                     }
                     if let capturedAt = usage.capturedAt {
-                        Text("快照于 \(RelativeTime.describe(capturedAt, now: context.date))")
+                        Text("快照于 \(RelativeTime.describe(capturedAt, now: context.date))"
+                             + (usage.source.map { " · 数据来自 \($0)" } ?? ""))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

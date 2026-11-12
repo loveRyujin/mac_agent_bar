@@ -56,10 +56,13 @@ public struct Usage: Sendable, Equatable {
     public var windows: [UsageWindow]
     /// 数据的来源时间（快照时间）。
     public var capturedAt: Date?
+    /// 数据借自别的工具时注明来源（如 "mmx"）；为 nil 时就是该 agent 自己的数据。
+    public var source: String?
 
-    public init(windows: [UsageWindow], capturedAt: Date?) {
+    public init(windows: [UsageWindow], capturedAt: Date?, source: String? = nil) {
         self.windows = windows
         self.capturedAt = capturedAt
+        self.source = source
     }
 
     /// 所有窗口里最高的实际已用比例；没有窗口时为 nil。

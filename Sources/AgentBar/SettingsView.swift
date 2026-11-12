@@ -47,14 +47,22 @@ struct SettingsView: View {
                 Toggle("隐藏邮箱（方便截图）", isOn: $model.settings.hideEmail)
             }
 
-            if model.installedProviders.contains(where: { $0.id == "cursor" }) {
+            if hasInstalled("cursor") || hasInstalled("mmx") || hasInstalled("minimax-code") {
                 Section {
-                    Toggle("通过 cursor-agent 获取 Cursor 用量", isOn: onlineUsage(of: "cursor"))
+                    if hasInstalled("cursor") {
+                        Toggle("通过 cursor-agent 获取 Cursor 用量", isOn: onlineUsage(of: "cursor"))
+                        Text("会读取钥匙串中 cursor-agent 的登录（需要先安装并运行 cursor-agent login），用它向 api2.cursor.sh 请求用量和续费日。第一次以及每次升级 AgentBar 后，系统会请求钥匙串授权。凭据只在内存中使用，不保存、不刷新。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if hasInstalled("mmx") || hasInstalled("minimax-code") {
+                        Toggle("通过 mmx 获取 MiniMax 用量", isOn: $model.settings.minimaxUsageViaMmx)
+                        Text("每次刷新时运行 mmx quota show，由 mmx 自己联网查询 Token Plan 额度；AgentBar 不读取 MiniMax 的凭据。MiniMax Code 与 mmx 登录同一账号时，两个页签显示相同的用量。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 } header: {
                     Text("用量")
-                } footer: {
-                    Text("会读取钥匙串中 cursor-agent 的登录（需要先安装并运行 cursor-agent login），用它向 api2.cursor.sh 请求用量和续费日。第一次以及每次升级 AgentBar 后，系统会请求钥匙串授权。凭据只在内存中使用，不保存、不刷新。")
-                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -149,6 +157,10 @@ struct SettingsView: View {
                     model.settings.disabledNotificationKinds.insert(kind)
                 }
             })
+    }
+
+    private func hasInstalled(_ id: String) -> Bool {
+        model.installedProviders.contains { $0.id == id }
     }
 
     private func onlineUsage(of id: String) -> Binding<Bool> {

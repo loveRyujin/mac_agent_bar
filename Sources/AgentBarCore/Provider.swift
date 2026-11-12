@@ -51,16 +51,21 @@ public struct ProviderRegistry: Sendable {
         self.providers = providers
     }
 
-    /// 默认注册表：所有已支持的 agent，不联网。新增 agent 只需加在这里。
-    public static let standard = standard(settings: AppSettings(), cursorUsage: nil)
+    /// 默认注册表：所有已支持的 agent，按默认设置。新增 agent 只需加在这里。
+    public static let standard = standard(settings: AppSettings(), cursorUsage: nil, mmx: MmxClient())
 
     /// 按设置构建注册表：开启了联网获取用量的 agent 才带上获取器。
-    public static func standard(settings: AppSettings, cursorUsage: CursorUsageFetcher?) -> ProviderRegistry {
+    /// - Parameter mmx: mmx 和 MiniMax Code 共用的 mmx 客户端（同一次刷新只调用一次 mmx）。
+    public static func standard(
+        settings: AppSettings, cursorUsage: CursorUsageFetcher?, mmx: MmxClient
+    ) -> ProviderRegistry {
         let cursorOnline = settings.onlineUsageProviderIDs.contains("cursor")
         return ProviderRegistry(providers: [
             ClaudeCodeProvider(),
             CodexProvider(),
             CursorProvider(usageFetcher: cursorOnline ? cursorUsage : nil),
+            MiniMaxCodeProvider(mmx: mmx, fetchesUsage: settings.minimaxUsageViaMmx),
+            MmxProvider(client: mmx, fetchesUsage: settings.minimaxUsageViaMmx),
         ])
     }
 

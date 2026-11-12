@@ -243,9 +243,9 @@ private let signedIn = [
     @Test func registryWiresFetcherOnlyWhenEnabled() {
         var settings = AppSettings()
         let fetcher = makeFetcher()
-        #expect(ProviderRegistry.standard(settings: settings, cursorUsage: fetcher).cursorFetchesUsage == false)
+        #expect(ProviderRegistry.standard(settings: settings, cursorUsage: fetcher, mmx: MmxClient()).cursorFetchesUsage == false)
         settings.onlineUsageProviderIDs = ["cursor"]
-        #expect(ProviderRegistry.standard(settings: settings, cursorUsage: fetcher).cursorFetchesUsage == true)
+        #expect(ProviderRegistry.standard(settings: settings, cursorUsage: fetcher, mmx: MmxClient()).cursorFetchesUsage == true)
     }
 }
 
