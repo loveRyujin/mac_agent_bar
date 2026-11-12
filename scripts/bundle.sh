@@ -23,6 +23,8 @@ cp "$BIN_DIR/AgentBar" "$APP/Contents/MacOS/AgentBar"
 for BUNDLE in "$BIN_DIR"/*.bundle; do
     [ -e "$BUNDLE" ] && cp -R "$BUNDLE" "$APP/Contents/Resources/"
 done
+# 应用图标（由 scripts/make-app-icon.swift 生成）
+cp assets/logo/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -30,6 +32,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key><string>AgentBar</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIdentifier</key><string>local.agentbar</string>
     <key>CFBundleName</key><string>AgentBar</string>
     <key>CFBundlePackageType</key><string>APPL</string>

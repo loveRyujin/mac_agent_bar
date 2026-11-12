@@ -2,11 +2,16 @@
 
 ## 授权
 
-项目代码以 MIT 授权，见 `LICENSE`。下文列出的图标不在 MIT 授权范围内，按其各自的授权和商标规则使用。
+项目代码以 MIT 授权，见 `LICENSE`。下文“agent 图标”一节列出的图标不在 MIT 授权范围内，按其各自的授权和商标规则使用。
 
-## 图标
+## AgentBar 的 logo
 
-`assets/icons/` 下的 SVG 及由其转换得到的 `Sources/AgentBar/Resources/*.pdf` 来自
+`assets/logo/` 下的 logo 和应用图标由本项目绘制，随代码一起以 MIT 授权。应用图标由
+`swift scripts/make-app-icon.swift assets/logo/agentbar.svg assets/logo/AppIcon.icns` 生成。
+
+## agent 图标
+
+`assets/icons/` 下的 SVG 及由其转换得到的 `Sources/AgentBar/Resources/{claude,cursor,openai}.pdf` 来自
 [Simple Icons](https://simpleicons.org)，按 [CC0 1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md) 授权：
 
 | 文件 | 图标 | 来源版本 |
