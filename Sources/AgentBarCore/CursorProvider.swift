@@ -13,10 +13,19 @@ public struct CursorProvider: Provider {
     private static let emailKey = "cursorAuth/cachedEmail"
 
     private let file: HomeFile
+    /// 用户开启“通过 cursor-agent 获取 Cursor 用量”时才有；为 nil 时用量显示“未开启联网获取”。
+    private let usageFetcher: CursorUsageFetcher?
 
-    public init(home: URL = FileManager.default.homeDirectoryForCurrentUser) {
+    public init(
+        home: URL = FileManager.default.homeDirectoryForCurrentUser,
+        usageFetcher: CursorUsageFetcher? = nil
+    ) {
         file = HomeFile(home: home, relativePath: "Library/Application Support/Cursor/User/globalStorage/state.vscdb")
+        self.usageFetcher = usageFetcher
     }
+
+    /// 是否会联网获取用量。
+    public var fetchesUsage: Bool { usageFetcher != nil }
 
     public func isInstalled() -> Bool { file.exists }
 
@@ -39,12 +48,31 @@ public struct CursorProvider: Provider {
         default: state = .unknown
         }
 
-        return SubscriptionStatus(
+        var status = SubscriptionStatus(
             plan: membership.map(Self.plan) ?? Plan(rawValue: "", displayName: "未知套餐"),
             state: state,
             account: email,
             details: subscriptionStatus.map { [Detail("stripeSubscriptionStatus", $0)] } ?? []
         )
+        await attachUsage(to: &status)
+        return status
+    }
+
+    /// 联网获取用量和续费日；失败只影响用量区。
+    private func attachUsage(to status: inout SubscriptionStatus) async {
+        guard let usageFetcher else {
+            status.usage = .networkDisabled
+            return
+        }
+        do {
+            let result = try await usageFetcher.fetch()
+            status.usage = .available(result.usage)
+            status.periodEnd = result.billingCycleEnd
+        } catch let error as CursorUsageError {
+            status.usage = .failed(error.message)
+        } catch {
+            status.usage = .failed(error.localizedDescription)
+        }
     }
 
     /// `pro` → “Pro”，`pro_plus` → “Pro+”，`free` → “Free”；未知值原样显示。

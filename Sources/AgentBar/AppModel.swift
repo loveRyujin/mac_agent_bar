@@ -19,15 +19,15 @@ final class AppModel: ObservableObject {
     /// 开机自启（以系统登录项的实际状态为准）。
     let launchAtLogin: LaunchAtLogin
 
-    private let registry: ProviderRegistry
+    /// Cursor 用量获取器，与应用同生命周期（记住钥匙串被拒绝的时间、缓存 cursor-agent 版本号）。
+    private let cursorUsage = CursorUsageFetcher()
     private let defaults: UserDefaults
     private let settingsStore: SettingsStore
     private var refreshLoop: Task<Void, Never>?
 
     private static let preferredKey = "selectedProviderID"
 
-    init(registry: ProviderRegistry = .standard, defaults: UserDefaults = .standard) {
-        self.registry = registry
+    init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         settingsStore = SettingsStore(defaults: defaults)
         let settings = settingsStore.load()
@@ -55,7 +55,12 @@ final class AppModel: ObservableObject {
         if settings.refreshInterval != old.refreshInterval {
             startRefreshLoop(refreshFirst: false)
         }
-        if settings.hiddenProviderIDs != old.hiddenProviderIDs {
+        if settings.onlineUsageProviderIDs.contains("cursor"), !old.onlineUsageProviderIDs.contains("cursor") {
+            // 重新打开开关：允许再次请求钥匙串授权
+            cursorUsage.resetKeychainDenial()
+        }
+        if settings.hiddenProviderIDs != old.hiddenProviderIDs
+            || settings.onlineUsageProviderIDs != old.onlineUsageProviderIDs {
             Task { await refresh() }
         }
     }
@@ -65,6 +70,11 @@ final class AppModel: ObservableObject {
     private var preferredID: String? {
         get { defaults.string(forKey: Self.preferredKey) }
         set { defaults.set(newValue, forKey: Self.preferredKey) }
+    }
+
+    /// 按当前设置构建的注册表（是否联网获取用量取决于设置）。
+    private var registry: ProviderRegistry {
+        .standard(settings: settings, cursorUsage: cursorUsage)
     }
 
     var rules: WarningRules {

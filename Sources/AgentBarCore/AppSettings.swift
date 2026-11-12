@@ -33,6 +33,8 @@ public struct AppSettings: Sendable, Equatable {
     public var expiryWarningDays = 7
     /// 额度窗口已用比例达到多少（%）时警示。
     public var usageWarningThreshold = 80
+    /// 允许联网获取用量的 agent（目前只有 Cursor），默认全关。
+    public var onlineUsageProviderIDs: Set<String> = []
 
     public init() {}
 }
@@ -40,7 +42,7 @@ public struct AppSettings: Sendable, Equatable {
 extension AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case launchAtLogin, refreshInterval, hiddenProviderIDs, hideEmail, statusBarStyle, expiryWarningDays
-        case usageWarningThreshold
+        case usageWarningThreshold, onlineUsageProviderIDs
     }
 
     /// 缺失或无法识别的字段各自回退到默认值，不影响其他字段。
@@ -57,6 +59,7 @@ extension AppSettings: Codable {
         statusBarStyle = value(.statusBarStyle, default: statusBarStyle)
         expiryWarningDays = value(.expiryWarningDays, default: expiryWarningDays)
         usageWarningThreshold = value(.usageWarningThreshold, default: usageWarningThreshold)
+        onlineUsageProviderIDs = value(.onlineUsageProviderIDs, default: onlineUsageProviderIDs)
     }
 }
 

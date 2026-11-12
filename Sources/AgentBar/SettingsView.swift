@@ -46,6 +46,17 @@ struct SettingsView: View {
                 Toggle("隐藏邮箱（方便截图）", isOn: $model.settings.hideEmail)
             }
 
+            if model.installedProviders.contains(where: { $0.id == "cursor" }) {
+                Section {
+                    Toggle("通过 cursor-agent 获取 Cursor 用量", isOn: onlineUsage(of: "cursor"))
+                } header: {
+                    Text("用量")
+                } footer: {
+                    Text("会读取钥匙串中 cursor-agent 的登录（需要先安装并运行 cursor-agent login），用它向 api2.cursor.sh 请求用量和续费日。第一次以及每次升级 AgentBar 后，系统会请求钥匙串授权。凭据只在内存中使用，不保存、不刷新。")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("提醒") {
                 Stepper(value: $model.settings.expiryWarningDays, in: 1...30) {
                     Text("订阅到期前 \(model.settings.expiryWarningDays) 天开始提醒")
@@ -92,6 +103,18 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private func onlineUsage(of id: String) -> Binding<Bool> {
+        Binding(
+            get: { model.settings.onlineUsageProviderIDs.contains(id) },
+            set: { enabled in
+                if enabled {
+                    model.settings.onlineUsageProviderIDs.insert(id)
+                } else {
+                    model.settings.onlineUsageProviderIDs.remove(id)
+                }
+            })
     }
 
     private func visibility(of id: String) -> Binding<Bool> {

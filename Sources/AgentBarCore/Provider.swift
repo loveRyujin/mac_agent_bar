@@ -51,12 +51,18 @@ public struct ProviderRegistry: Sendable {
         self.providers = providers
     }
 
-    /// 默认注册表：所有已支持的 agent。新增 agent 只需加在这里。
-    public static let standard = ProviderRegistry(providers: [
-        ClaudeCodeProvider(),
-        CodexProvider(),
-        CursorProvider(),
-    ])
+    /// 默认注册表：所有已支持的 agent，不联网。新增 agent 只需加在这里。
+    public static let standard = standard(settings: AppSettings(), cursorUsage: nil)
+
+    /// 按设置构建注册表：开启了联网获取用量的 agent 才带上获取器。
+    public static func standard(settings: AppSettings, cursorUsage: CursorUsageFetcher?) -> ProviderRegistry {
+        let cursorOnline = settings.onlineUsageProviderIDs.contains("cursor")
+        return ProviderRegistry(providers: [
+            ClaudeCodeProvider(),
+            CodexProvider(),
+            CursorProvider(usageFetcher: cursorOnline ? cursorUsage : nil),
+        ])
+    }
 
     /// 已安装的 provider（包括被用户隐藏的），按注册顺序。设置界面据此列出可以隐藏的 agent。
     public func installedProviders() -> [any Provider] {
