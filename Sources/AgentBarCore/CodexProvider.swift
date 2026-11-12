@@ -8,6 +8,7 @@ public struct CodexProvider: Provider {
     public let iconName: String? = "openai"
 
     private let file: HomeFile
+    private let usageReader: CodexUsageReader
     private let now: @Sendable () -> Date
 
     public init(
@@ -15,6 +16,7 @@ public struct CodexProvider: Provider {
         now: @escaping @Sendable () -> Date = { Date() }
     ) {
         file = HomeFile(home: home, relativePath: ".codex/auth.json")
+        usageReader = CodexUsageReader(home: home)
         self.now = now
     }
 
@@ -75,7 +77,9 @@ public struct CodexProvider: Provider {
             account: claims.email,
             periodEnd: periodEnd,
             details: details,
-            sourceUpdatedAt: auth?.lastChecked.flatMap(DateParsing.iso8601)
+            sourceUpdatedAt: auth?.lastChecked.flatMap(DateParsing.iso8601),
+            // 额度快照来自会话日志；读不到只影响用量区
+            usage: usageReader.read()
         )
     }
 

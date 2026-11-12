@@ -153,6 +153,26 @@ private func date(_ iso: String) -> Date { DateParsing.iso8601(iso)! }
         }
     }
 
+    @Test func chatGPTLoginIncludesUsageFromSessionLogs() async throws {
+        let home = try makeHome(authMode: "chatgpt", idToken: try makeJWT(chatGPTPayload()))
+        let line = #"{"timestamp":"2026-11-10T02:43:43.837Z","type":"event_msg","payload":{"type":"token_count","rate_limits":{"primary":{"used_percent":12.0,"window_minutes":300,"resets_at":1794296603},"secondary":{"used_percent":26.0,"window_minutes":10080,"resets_at":1794385798}}}}"#
+        try home.write(line + "\n", to: ".codex/sessions/2026/11/09/rollout-x.jsonl")
+
+        let status = try await provider(home).fetchStatus()
+
+        #expect(status.usage.usage?.windows.map(\.usedPercent) == [12, 26])
+    }
+
+    @Test func chatGPTLoginWithoutSessionLogsHasNoUsageData() async throws {
+        let home = try makeHome(authMode: "chatgpt", idToken: try makeJWT(chatGPTPayload()))
+        #expect(try await provider(home).fetchStatus().usage == .noData)
+    }
+
+    @Test func apiKeyModeUsageIsUnsupported() async throws {
+        let home = try makeHome(authMode: "apikey", idToken: nil, apiKey: "sk-fake")
+        #expect(try await provider(home).fetchStatus().usage == .unsupported)
+    }
+
     @Test func identity() {
         let provider = CodexProvider()
         #expect(provider.id == "codex")
