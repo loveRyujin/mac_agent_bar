@@ -5,6 +5,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var launchAtLogin: LaunchAtLogin
+    @ObservedObject var notifier: Notifier
 
     var body: some View {
         Form {
@@ -65,12 +66,35 @@ struct SettingsView: View {
                     Text("额度用到 \(model.settings.usageWarningThreshold)% 时提醒")
                 }
             }
+
+            Section {
+                ForEach(NotificationKind.allCases, id: \.self) { kind in
+                    Toggle(Self.label(for: kind), isOn: notificationEnabled(kind))
+                }
+                if notifier.authorizationStatus == .denied {
+                    HStack {
+                        Text("系统设置中关闭了 AgentBar 的通知").foregroundStyle(.secondary)
+                        Spacer()
+                        Button("打开通知设置") {
+                            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!)
+                        }
+                    }
+                }
+            } header: {
+                Text("通知")
+            } footer: {
+                Text("每个事件只通知一次。第一次需要发通知时会请求通知权限。点击通知会打开面板并切换到对应的 agent。")
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
         // 用户可能在系统设置里改过登录项，打开设置窗口时重新读取
-        .onAppear { launchAtLogin.refreshStatus() }
+        .onAppear {
+            launchAtLogin.refreshStatus()
+            Task { await notifier.refreshAuthorizationStatus() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             launchAtLogin.refreshStatus()
         }
@@ -103,6 +127,28 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private static func label(for kind: NotificationKind) -> String {
+        switch kind {
+        case .expiringSoon: "订阅快到期"
+        case .expired: "订阅已过期"
+        case .usageHigh: "额度快用完"
+        case .usageReset: "额度已重置"
+        case .readFailure: "读取失败"
+        }
+    }
+
+    private func notificationEnabled(_ kind: NotificationKind) -> Binding<Bool> {
+        Binding(
+            get: { !model.settings.disabledNotificationKinds.contains(kind) },
+            set: { enabled in
+                if enabled {
+                    model.settings.disabledNotificationKinds.remove(kind)
+                } else {
+                    model.settings.disabledNotificationKinds.insert(kind)
+                }
+            })
     }
 
     private func onlineUsage(of id: String) -> Binding<Bool> {

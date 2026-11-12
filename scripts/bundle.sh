@@ -33,7 +33,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <dict>
     <key>CFBundleExecutable</key><string>AgentBar</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
-    <key>CFBundleIdentifier</key><string>local.agentbar</string>
+    <key>CFBundleIdentifier</key><string>io.github.loveryujin.agentbar</string>
     <key>CFBundleName</key><string>AgentBar</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>

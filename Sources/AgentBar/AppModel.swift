@@ -21,6 +21,11 @@ final class AppModel: ObservableObject {
 
     /// Cursor 用量获取器，与应用同生命周期（记住钥匙串被拒绝的时间、缓存 cursor-agent 版本号）。
     private let cursorUsage = CursorUsageFetcher()
+
+    /// 系统通知。去重记录持久化保存，重启后不会重复通知。
+    let notifier = Notifier()
+    private let ledgerStore: NotificationLedgerStore
+    private var ledger: NotificationLedger
     private let defaults: UserDefaults
     private let settingsStore: SettingsStore
     private var refreshLoop: Task<Void, Never>?
@@ -28,12 +33,23 @@ final class AppModel: ObservableObject {
     private static let preferredKey = "selectedProviderID"
 
     init(defaults: UserDefaults = .standard) {
+        // bundle id 更换后，第一次启动时把旧 id 下的偏好搬过来
+        if let legacy = UserDefaults(suiteName: PreferencesMigration.legacyDomain) {
+            PreferencesMigration.migrate(from: legacy, to: defaults)
+        }
         self.defaults = defaults
         settingsStore = SettingsStore(defaults: defaults)
         let settings = settingsStore.load()
         self.settings = settings
+        ledgerStore = NotificationLedgerStore(defaults: defaults)
+        ledger = ledgerStore.load()
         launchAtLogin = LaunchAtLogin(defaults: defaults, settings: settings)
         startRefreshLoop(refreshFirst: true)
+        // 点击通知：切换到对应 agent 并打开面板
+        notifier.onOpen = { [weak self] id in
+            self?.select(id)
+            StatusItemPanel.open()
+        }
     }
 
     /// 定时刷新。AppModel 与应用同生命周期；只在刷新间隔改变时重启。
@@ -104,6 +120,14 @@ final class AppModel: ObservableObject {
             preferred: preferredID, registryOrder: registry.providers.map(\.id), results: results)
         lastRefreshedAt = Date()
         isRefreshing = false
+        await notify(about: results)
+    }
+
+    private func notify(about results: [ProviderResult]) async {
+        let rules = NotificationRules(warningRules: rules, disabledKinds: settings.disabledNotificationKinds)
+        let events = rules.evaluate(results: results, ledger: &ledger, now: Date())
+        ledgerStore.save(ledger)
+        await notifier.send(events)
     }
 
     /// 用户点击页签：面板和状态栏都切换过去，并记住这个选择。
