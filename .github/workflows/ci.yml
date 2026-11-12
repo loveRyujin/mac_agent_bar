@@ -1,0 +1,37 @@
+# 推送到 main 或有 PR 时：构建、运行测试、确认能打包出签名有效的 .app。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 同一分支有新的推送时，取消还没跑完的旧任务。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 工具链版本
+        run: swift --version
+
+      - name: 构建
+        run: swift build
+
+      # runner 上装了 Xcode，scripts/test.sh 会直接调用 swift test。
+      - name: 测试
+        run: scripts/test.sh
+
+      - name: 打包
+        run: |
+          scripts/bundle.sh
+          codesign --verify --strict build/AgentBar.app

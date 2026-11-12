@@ -1,0 +1,68 @@
+# 推送 v* tag 时：检查 tag 与代码中的版本号一致，测试、打包，然后创建 GitHub Release 并上传安装包。
+# 发版步骤：修改 Sources/AgentBarCore/AgentBarCore.swift 里的版本号并提交，再打 tag 推送，例如
+#   git tag -a v0.2.0 -m "v0.2.0" && git push origin v0.2.0
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 检查 tag 与版本号一致
+        id: version
+        run: |
+          VERSION="$(sed -n 's/.*static let version = "\(.*\)".*/\1/p' Sources/AgentBarCore/AgentBarCore.swift)"
+          if [ "v$VERSION" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME 与代码中的版本号 $VERSION 不一致"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: 测试
+        run: scripts/test.sh
+
+      - name: 打包
+        id: package
+        run: |
+          scripts/bundle.sh
+          codesign --verify --strict build/AgentBar.app
+          ZIP="build/AgentBar-${{ steps.version.outputs.version }}-macos.zip"
+          ditto -c -k --keepParent build/AgentBar.app "$ZIP"
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: 创建 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZIP: ${{ steps.package.outputs.zip }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
+        run: |
+          cat > notes.md <<EOF
+          ## 安装
+
+          1. 下载 \`$(basename "$ZIP")\` 并解压
+          2. 把 \`AgentBar.app\` 拖到“应用程序”文件夹
+          3. 应用是 ad-hoc 签名，没有经过 Apple 公证。从浏览器下载后第一次打开会被 Gatekeeper 拦截，可以运行：
+             \`\`\`
+             xattr -dr com.apple.quarantine /Applications/AgentBar.app
+             \`\`\`
+             或者在“系统设置 → 隐私与安全性”里点“仍要打开”
+
+          系统要求：macOS 13 或更高，Apple Silicon（安装包只包含 arm64）。
+
+          SHA-256 (\`$(basename "$ZIP")\`)：\`$SHA256\`
+          EOF
+          gh release create "$GITHUB_REF_NAME" "$ZIP" \
+            --verify-tag \
+            --title "AgentBar $GITHUB_REF_NAME" \
+            --notes-file notes.md \
+            --generate-notes
