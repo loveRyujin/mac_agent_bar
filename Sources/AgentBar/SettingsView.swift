@@ -40,6 +40,7 @@ struct SettingsView: View {
             Section("显示") {
                 Picker("状态栏文字", selection: $model.settings.statusBarStyle) {
                     Text("套餐名").tag(AppSettings.StatusBarStyle.planName)
+                    Text("用量百分比").tag(AppSettings.StatusBarStyle.usagePercent)
                     Text("只显示图标").tag(AppSettings.StatusBarStyle.iconOnly)
                 }
                 Toggle("隐藏邮箱（方便截图）", isOn: $model.settings.hideEmail)
@@ -48,6 +49,9 @@ struct SettingsView: View {
             Section("提醒") {
                 Stepper(value: $model.settings.expiryWarningDays, in: 1...30) {
                     Text("订阅到期前 \(model.settings.expiryWarningDays) 天开始提醒")
+                }
+                Stepper(value: $model.settings.usageWarningThreshold, in: 50...100, step: 5) {
+                    Text("额度用到 \(model.settings.usageWarningThreshold)% 时提醒")
                 }
             }
         }

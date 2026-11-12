@@ -16,7 +16,9 @@ struct PanelView: View {
                 tabs
                 Divider()
                 if let selected = model.selected {
-                    AgentDetailView(result: selected, warning: model.warning(for: selected), rules: model.rules)
+                    AgentDetailView(
+                        result: selected, warnings: model.rules.warnings(for: selected.outcome, now: Date()),
+                        rules: model.rules)
                         .padding(12)
                 }
             }
@@ -110,7 +112,7 @@ private struct TabButton: View {
 /// 选中 agent 的信息区。
 private struct AgentDetailView: View {
     let result: ProviderResult
-    let warning: Warning?
+    let warnings: [Warning]
     let rules: WarningRules
 
     var body: some View {
@@ -120,7 +122,7 @@ private struct AgentDetailView: View {
             case .success(let status):
                 statusView(status)
             case .failure:
-                warningLine
+                warningLines
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -145,7 +147,8 @@ private struct AgentDetailView: View {
             Text("\(status.state == .trial ? "试用到期" : "到期/续费")：\(rules.formatDate(periodEnd, now: now))（\(days)）")
                 .foregroundStyle(.secondary)
         }
-        warningLine
+        UsageSection(usage: status.usage, rules: rules)
+        warningLines
         if !status.details.isEmpty {
             DisclosureGroup("详情") {
                 VStack(alignment: .leading, spacing: 2) {
@@ -169,12 +172,86 @@ private struct AgentDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private var warningLine: some View {
-        if let warning {
+    /// 所有警示，按严重程度从高到低逐条显示。
+    private var warningLines: some View {
+        ForEach(Array(warnings.enumerated()), id: \.offset) { _, warning in
             Label(warning.message, systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// 用量区：每个额度窗口一行（名称、进度条、百分比、重置时间），以及数据来源时间。
+/// 拿不到用量时只显示原因。每分钟刷新一次，面板开着时倒计时也会更新。
+private struct UsageSection: View {
+    let usage: UsageAvailability
+    let rules: WarningRules
+
+    var body: some View {
+        if let usage = usage.usage, !usage.windows.isEmpty {
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("用量").font(.callout.weight(.medium))
+                    Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 4) {
+                        ForEach(usage.windows, id: \.id) { window in
+                            row(window.effective(at: context.date), now: context.date)
+                        }
+                    }
+                    if let capturedAt = usage.capturedAt {
+                        Text("快照于 \(RelativeTime.describe(capturedAt, now: context.date))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.vertical, 2)
+        } else if let reason = usage.unavailableReason {
+            Text("用量：\(reason)").foregroundStyle(.secondary)
+        }
+    }
+
+    private func row(_ window: EffectiveUsageWindow, now: Date) -> some View {
+        let percent = window.usedPercent
+        return GridRow {
+            Text(window.window.name)
+            UsageBar(fraction: percent / 100, color: color(for: percent))
+                .frame(width: 70, height: 6)
+            Text("\(Int(percent.rounded()))%")
+                .monospacedDigit()
+                .gridColumnAlignment(.trailing)
+            Text(resetDescription(window, now: now))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .font(.callout)
+    }
+
+    private func resetDescription(_ window: EffectiveUsageWindow, now: Date) -> String {
+        if window.isInferredReset { return "已重置（推测）" }
+        return window.window.resetsAt.map { rules.resetText($0, now: now) } ?? ""
+    }
+
+    private func color(for percent: Double) -> Color {
+        if percent >= 100 { return .red }
+        if percent >= Double(rules.usageThreshold) { return .orange }
+        return .accentColor
+    }
+}
+
+private struct UsageBar: View {
+    let fraction: Double
+    let color: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.primary.opacity(0.12))
+                Capsule()
+                    .fill(color)
+                    .frame(width: proxy.size.width * min(max(fraction, 0), 1))
+            }
         }
     }
 }
