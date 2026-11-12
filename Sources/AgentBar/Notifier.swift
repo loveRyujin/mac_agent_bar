@@ -1,6 +1,7 @@
 import AgentBarCore
 import AppKit
-import UserNotifications
+// GitHub Actions 上的 Swift 6.1 SDK 尚未给 UNNotificationSettings 等类型补上 Sendable 标注
+@preconcurrency import UserNotifications
 
 /// 发送系统通知，并处理点击。第一次有通知要发时才向系统申请权限。
 @MainActor
