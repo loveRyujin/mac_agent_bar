@@ -70,7 +70,7 @@ public struct WarningRules: Sendable {
         return warnings
     }
 
-    private func expiryWarning(for status: SubscriptionStatus, now: Date) -> (warning: Warning, isExpired: Bool)? {
+    func expiryWarning(for status: SubscriptionStatus, now: Date) -> (warning: Warning, isExpired: Bool)? {
         if status.state == .expired || status.periodEnd.map({ $0 <= now }) == true {
             let message = status.periodEnd.map { "订阅已于 \(formatDate($0, now: now))到期" } ?? "订阅已过期"
             return (Warning(short: "已过期", message: message), true)
