@@ -66,3 +66,29 @@ jobs:
             --title "AgentBar $GITHUB_REF_NAME" \
             --notes-file notes.md \
             --generate-notes
+
+      # 更新 Homebrew tap（见 docs/adr/0001-homebrew-source-formula.md）。失败不影响 Release，只在工作流中报错。
+      - name: 更新 Homebrew formula
+        continue-on-error: true
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ -z "$TAP_TOKEN" ]; then
+            echo "::warning::没有配置 TAP_TOKEN，跳过更新 Homebrew formula"
+            exit 0
+          fi
+          URL="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
+          SHA256="$(curl -sSfL "$URL" | shasum -a 256 | cut -d' ' -f1)"
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/loveRyujin/homebrew-agentbar.git" tap
+          mkdir -p tap/Formula
+          {
+            echo "# 由 loveRyujin/mac_agent_bar 的 release.yml 根据 packaging/homebrew/agentbar.rb.template 自动生成，请勿手动修改。"
+            sed -e '1,3d' -e "s|@VERSION@|${VERSION}|g" -e "s|@SHA256@|${SHA256}|" packaging/homebrew/agentbar.rb.template
+          } > tap/Formula/agentbar.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/agentbar.rb
+          git commit -m "agentbar ${VERSION}"
+          git push

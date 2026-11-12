@@ -6,16 +6,27 @@
 
 ## 功能
 
-- 支持 **Claude Code**、**Codex**、**Cursor**，自动发现本机已安装的 agent
-- 状态栏显示选中 agent 的图标和套餐名，在面板里点击图标切换
-- 订阅 7 天内到期、已过期或读取失败时，在状态栏和面板中提示
-- 只读本地文件，不联网，不读取任何 access token、refresh token 或 API key
+- 支持 **Claude Code**、**Codex**、**Cursor**、**MiniMax Code**、**mmx**，自动发现本机已安装的 agent
+- 显示套餐、订阅状态、到期时间，以及 5 小时、每周等额度窗口的用量和重置时间
+- 状态栏显示 AgentBar 的 logo 和选中 agent 的套餐名、用量或警示；在面板里点击图标切换
+- 快到期、额度快用完、读取失败时在状态栏和面板中提示，并发送系统通知
+- 设置：开机自启、刷新间隔、显示哪些 agent、隐藏邮箱、提醒阈值、各类通知开关
+- 不保存、不刷新任何 access token、refresh token 或 API key（见下文“数据来源”）
 
 ## 安装
 
-从 [Releases](https://github.com/loveRyujin/mac_agent_bar/releases) 下载 zip，解压后把 `AgentBar.app` 拖到“应用程序”文件夹。
+### Homebrew（推荐）
 
-应用没有经过 Apple 公证，第一次打开前需要运行：
+```sh
+brew install loveRyujin/agentbar/agentbar
+agentbar   # 打开应用
+```
+
+在本机从源码编译（大约一两分钟），需要 Command Line Tools（Swift 6）。应用安装在 Homebrew 的目录里；想在“应用程序”里看到它，可以按安装结束时的提示链接到 `~/Applications`。升级用 `brew upgrade agentbar`。
+
+### 下载安装包
+
+从 [Releases](https://github.com/loveRyujin/mac_agent_bar/releases) 下载 zip，解压后把 `AgentBar.app` 拖到“应用程序”文件夹。应用没有经过 Apple 公证，第一次打开前需要运行：
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/AgentBar.app
@@ -35,11 +46,13 @@ scripts/bundle.sh    # 打包成 build/AgentBar.app
 
 ## 数据来源
 
-| Agent | 读取的文件 |
-|---|---|
-| Claude Code | `~/.claude.json` 中的 `oauthAccount` |
-| Codex | `~/.codex/auth.json`（在本地解码 `id_token` 中的订阅字段） |
-| Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`（只读打开） |
+| Agent | 订阅信息 | 用量 |
+|---|---|---|
+| Claude Code | `~/.claude.json` 中的 `oauthAccount` | 同一文件中 Claude Code 缓存的 `cachedUsageUtilization` |
+| Codex | `~/.codex/auth.json`（在本地解码 `id_token` 中的订阅字段） | 会话日志 `~/.codex/sessions/` 中的额度快照 |
+| Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`（只读打开） | **默认关闭**。在设置中开启后，借用 `cursor-agent` 的登录（钥匙串）向 `api2.cursor.sh` 查询 |
+| MiniMax Code | `~/.minimax/auth/…/auth-state.json` 中的登录状态 | 借用 mmx 查到的结果（同一账号） |
+| mmx | `mmx auth status` | `mmx quota show`（由 mmx 自己联网查询） |
 
 ## 发布新版本
 
