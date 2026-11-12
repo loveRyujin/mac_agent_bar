@@ -3,10 +3,13 @@ import SwiftUI
 
 @main
 struct AgentBarApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
+    /// 图标被隐藏时应用不退出（见 `MenuBarVisibility`）。
+    @AppStorage(MenuBarVisibility.key) private var showInMenuBar = true
 
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra(isInserted: $showInMenuBar) {
             PanelView(model: model)
         } label: {
             MenuBarLabel(model: model)
