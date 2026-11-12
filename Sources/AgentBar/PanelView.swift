@@ -8,7 +8,7 @@ struct PanelView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if model.results.isEmpty {
-                Text(model.isRefreshing ? "正在读取…" : "没有发现已安装的 agent")
+                Text(emptyMessage)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 24)
@@ -25,6 +25,12 @@ struct PanelView: View {
         }
         .frame(width: 320)
         .onAppear { Task { await model.refresh() } }
+    }
+
+    private var emptyMessage: String {
+        if model.isRefreshing { return "正在读取…" }
+        if !model.installedProviders.isEmpty { return "所有 agent 都已隐藏，可以在设置中重新显示" }
+        return "没有发现已安装的 agent"
     }
 
     private var tabs: some View {
@@ -65,6 +71,8 @@ struct PanelView: View {
 
             MenuRow(title: "刷新", shortcut: "⌘R") { Task { await model.refresh() } }
                 .keyboardShortcut("r")
+            MenuRow(title: "设置…", shortcut: "⌘,") { SettingsWindow.show(model: model) }
+                .keyboardShortcut(",")
             MenuRow(title: "退出", shortcut: "⌘Q") { NSApplication.shared.terminate(nil) }
                 .keyboardShortcut("q")
         }
