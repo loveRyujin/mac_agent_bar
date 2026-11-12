@@ -79,7 +79,7 @@ public struct CodexProvider: Provider {
         )
     }
 
-    /// `plus` → “ChatGPT Plus”，以此类推；未知值原样显示。
+    /// `plus` → “ChatGPT Plus”（状态栏短名称 “Plus”），以此类推；未知值原样显示。
     static func plan(_ planType: String) -> Plan {
         let names = [
             "free": "ChatGPT Free",
@@ -91,7 +91,8 @@ public struct CodexProvider: Provider {
             "enterprise": "ChatGPT Enterprise",
             "edu": "ChatGPT Edu",
         ]
-        return names[planType].map { Plan(rawValue: planType, displayName: $0) } ?? .unrecognized(planType)
+        guard let name = names[planType] else { return .unrecognized(planType) }
+        return Plan(rawValue: planType, displayName: name, shortName: String(name.dropFirst("ChatGPT ".count)))
     }
 }
 

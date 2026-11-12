@@ -4,10 +4,13 @@ import Foundation
 public struct Plan: Sendable, Equatable {
     public var rawValue: String
     public var displayName: String
+    /// 状态栏里用的短名称（例如 “ChatGPT Plus” → “Plus”），默认与 `displayName` 相同。
+    public var shortName: String
 
-    public init(rawValue: String, displayName: String) {
+    public init(rawValue: String, displayName: String, shortName: String? = nil) {
         self.rawValue = rawValue
         self.displayName = displayName
+        self.shortName = shortName ?? displayName
     }
 
     /// 无法识别的套餐：原样显示原始值。

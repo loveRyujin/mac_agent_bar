@@ -59,7 +59,7 @@ private func date(_ iso: String) -> Date { DateParsing.iso8601(iso)! }
         let home = try makeHome(authMode: "chatgpt", idToken: try makeJWT(chatGPTPayload()))
         let status = try await provider(home).fetchStatus()
 
-        #expect(status.plan == Plan(rawValue: "plus", displayName: "ChatGPT Plus"))
+        #expect(status.plan == Plan(rawValue: "plus", displayName: "ChatGPT Plus", shortName: "Plus"))
         #expect(status.state == .active)
         #expect(status.account == "codex-user@example.com")
         #expect(status.periodEnd == date("2026-11-22T08:06:34Z"))

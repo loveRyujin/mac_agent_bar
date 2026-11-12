@@ -3,24 +3,30 @@ import SwiftUI
 
 @main
 struct AgentBarApp: App {
+    @StateObject private var model = AppModel()
+
     var body: some Scene {
         MenuBarExtra {
-            // 临时界面：用于确认图标着色，工单 06 会替换成正式的面板。
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 16) {
-                    AgentIconView(iconName: "claude", displayName: "Claude Code", size: 20)
-                    AgentIconView(iconName: "openai", displayName: "Codex", size: 20)
-                    AgentIconView(iconName: "cursor", displayName: "Cursor", size: 20)
-                    AgentIconView(iconName: nil, displayName: "Fallback", size: 20)
-                }
-                Divider()
-                Button("退出") { NSApplication.shared.terminate(nil) }
-                    .keyboardShortcut("q")
-            }
-            .padding()
+            PanelView(model: model)
         } label: {
-            AgentIconView(iconName: "claude", displayName: "Claude Code")
+            MenuBarLabel(model: model)
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+/// 状态栏：选中 agent 的图标 + 短文字（套餐名或警示）；其他 agent 有警示时末尾加小圆点。
+private struct MenuBarLabel: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        if let selected = model.selected {
+            HStack(spacing: 4) {
+                AgentIconView(iconName: selected.provider.iconName, displayName: selected.provider.displayName)
+                Text((model.statusBarText ?? "") + (model.othersHaveWarning ? " •" : ""))
+            }
+        } else {
+            Image(systemName: "person.crop.circle.badge.checkmark")
+        }
     }
 }

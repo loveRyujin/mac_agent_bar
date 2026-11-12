@@ -46,6 +46,13 @@ public struct ProviderRegistry: Sendable {
         self.providers = providers
     }
 
+    /// 默认注册表：所有已支持的 agent。新增 agent 只需加在这里。
+    public static let standard = ProviderRegistry(providers: [
+        ClaudeCodeProvider(),
+        CodexProvider(),
+        CursorProvider(),
+    ])
+
     /// 对已安装的 provider 并发调用 `fetchStatus()`。每个 provider 的错误单独捕获，互不影响；
     /// 结果按注册顺序返回，未安装的 provider 不出现在结果里。
     public func refreshAll() async -> [ProviderResult] {
