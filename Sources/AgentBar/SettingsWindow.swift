@@ -17,7 +17,8 @@ enum SettingsWindow {
                 defer: false)
             window.title = "AgentBar 设置"
             window.isReleasedWhenClosed = false
-            window.contentViewController = NSHostingController(rootView: SettingsView(model: model))
+            window.contentViewController = NSHostingController(
+                rootView: SettingsView(model: model, launchAtLogin: model.launchAtLogin))
             window.center()
             self.window = window
         }

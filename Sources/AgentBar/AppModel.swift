@@ -16,6 +16,9 @@ final class AppModel: ObservableObject {
         didSet { settingsDidChange(from: oldValue) }
     }
 
+    /// 开机自启（以系统登录项的实际状态为准）。
+    let launchAtLogin: LaunchAtLogin
+
     private let registry: ProviderRegistry
     private let defaults: UserDefaults
     private let settingsStore: SettingsStore
@@ -27,7 +30,9 @@ final class AppModel: ObservableObject {
         self.registry = registry
         self.defaults = defaults
         settingsStore = SettingsStore(defaults: defaults)
-        settings = settingsStore.load()
+        let settings = settingsStore.load()
+        self.settings = settings
+        launchAtLogin = LaunchAtLogin(defaults: defaults, settings: settings)
         startRefreshLoop(refreshFirst: true)
     }
 

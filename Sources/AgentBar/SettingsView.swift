@@ -4,10 +4,23 @@ import SwiftUI
 /// 设置界面。所有改动直接写进 `model.settings`，立即保存并生效。
 struct SettingsView: View {
     @ObservedObject var model: AppModel
+    @ObservedObject var launchAtLogin: LaunchAtLogin
 
     var body: some View {
         Form {
             Section("通用") {
+                Toggle("开机自动启动", isOn: launchAtLoginBinding)
+                if launchAtLogin.requiresApproval {
+                    HStack {
+                        Text("需要在“系统设置 → 通用 → 登录项”中允许 AgentBar")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("打开登录项设置") { launchAtLogin.openLoginItemsSettings() }
+                    }
+                }
+                if let error = launchAtLogin.errorMessage {
+                    Text(error).foregroundStyle(.red)
+                }
                 Picker("刷新间隔", selection: $model.settings.refreshInterval) {
                     ForEach(AppSettings.RefreshInterval.allCases, id: \.self) { interval in
                         Text("\(interval.minutes) 分钟").tag(interval)
@@ -41,6 +54,21 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
+        // 用户可能在系统设置里改过登录项，打开设置窗口时重新读取
+        .onAppear { launchAtLogin.refreshStatus() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            launchAtLogin.refreshStatus()
+        }
+    }
+
+    /// 开关显示系统的实际状态；拨动时直接向系统注册或取消，并记进设置。
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { launchAtLogin.isEnabled || launchAtLogin.requiresApproval },
+            set: { enabled in
+                model.settings.launchAtLogin = enabled
+                launchAtLogin.setEnabled(enabled)
+            })
     }
 
     /// 只列出已安装的 agent；关掉后不读取、不显示、不提醒。
