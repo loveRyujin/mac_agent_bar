@@ -18,6 +18,8 @@ public struct AppSettings: Sendable, Equatable {
         case planName
         /// 只显示 logo，有警示时加 “•”
         case iconOnly
+        /// 选中 agent 所有额度窗口里最高的已用比例（拿不到用量时显示套餐名）
+        case usagePercent
     }
 
     public var launchAtLogin = true
@@ -29,6 +31,8 @@ public struct AppSettings: Sendable, Equatable {
     public var statusBarStyle = StatusBarStyle.planName
     /// 订阅到期提前几天警示。
     public var expiryWarningDays = 7
+    /// 额度窗口已用比例达到多少（%）时警示。
+    public var usageWarningThreshold = 80
 
     public init() {}
 }
@@ -36,6 +40,7 @@ public struct AppSettings: Sendable, Equatable {
 extension AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case launchAtLogin, refreshInterval, hiddenProviderIDs, hideEmail, statusBarStyle, expiryWarningDays
+        case usageWarningThreshold
     }
 
     /// 缺失或无法识别的字段各自回退到默认值，不影响其他字段。
@@ -51,6 +56,7 @@ extension AppSettings: Codable {
         hideEmail = value(.hideEmail, default: hideEmail)
         statusBarStyle = value(.statusBarStyle, default: statusBarStyle)
         expiryWarningDays = value(.expiryWarningDays, default: expiryWarningDays)
+        usageWarningThreshold = value(.usageWarningThreshold, default: usageWarningThreshold)
     }
 }
 

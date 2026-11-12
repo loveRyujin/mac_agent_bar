@@ -26,7 +26,7 @@ import Testing
             Detail("userRateLimitTier", "default_raven"),
             Detail("hasExtraUsageEnabled", "true"),
         ])
-        #expect(status.usage == nil)
+        #expect(status.usage == .unsupported)
     }
 
     @Test func personalMax() async throws {

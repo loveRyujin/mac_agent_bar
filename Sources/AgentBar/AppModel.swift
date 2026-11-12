@@ -68,7 +68,7 @@ final class AppModel: ObservableObject {
     }
 
     var rules: WarningRules {
-        WarningRules(warningDays: settings.expiryWarningDays)
+        WarningRules(warningDays: settings.expiryWarningDays, usageThreshold: settings.usageWarningThreshold)
     }
 
     /// 界面显示的结果：开启“隐藏邮箱”时其中的邮箱已被替换。

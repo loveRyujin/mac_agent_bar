@@ -30,11 +30,6 @@ public struct Detail: Sendable, Equatable {
     }
 }
 
-/// 用量/额度，为后续版本预留。第一版恒为 nil。
-public struct Usage: Sendable, Equatable {
-    public init() {}
-}
-
 /// 某个 agent 当前登录账号的订阅信息。
 public struct SubscriptionStatus: Sendable, Equatable {
     public enum State: String, Sendable, Equatable {
@@ -56,7 +51,8 @@ public struct SubscriptionStatus: Sendable, Equatable {
     public var details: [Detail]
     /// 数据源自身的更新时间。
     public var sourceUpdatedAt: Date?
-    public var usage: Usage?
+    /// 用量 / 额度；拿不到时说明原因。
+    public var usage: UsageAvailability
 
     public init(
         plan: Plan,
@@ -66,7 +62,7 @@ public struct SubscriptionStatus: Sendable, Equatable {
         periodEnd: Date? = nil,
         details: [Detail] = [],
         sourceUpdatedAt: Date? = nil,
-        usage: Usage? = nil
+        usage: UsageAvailability = .unsupported
     ) {
         self.plan = plan
         self.state = state
