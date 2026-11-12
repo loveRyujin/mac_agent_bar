@@ -9,16 +9,21 @@ public struct UsageWindow: Sendable, Equatable {
     /// 已用比例，0–100。
     public var usedPercent: Double
     public var resetsAt: Date?
+    /// 自定义显示名称（如 “每周（Opus）”、“本计费周期”）；为 nil 时由窗口长度推出。
+    public var label: String?
 
-    public init(id: String, windowMinutes: Int?, usedPercent: Double, resetsAt: Date?) {
+    public init(id: String, windowMinutes: Int?, usedPercent: Double, resetsAt: Date?, label: String? = nil) {
         self.id = id
         self.windowMinutes = windowMinutes
         self.usedPercent = usedPercent
         self.resetsAt = resetsAt
+        self.label = label
     }
 
-    /// 显示名称：300 → “5 小时”，10080 → “每周”，1440 → “每天”；没有窗口长度时用 `id`。
+    /// 显示名称：有 `label` 时用它；否则 300 → “5 小时”，10080 → “每周”，1440 → “每天”；
+    /// 没有窗口长度时用 `id`。
     public var name: String {
+        if let label { return label }
         guard let minutes = windowMinutes else { return id }
         switch minutes {
         case 10080: return "每周"

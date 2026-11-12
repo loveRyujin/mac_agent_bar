@@ -31,7 +31,44 @@ public struct ClaudeCodeProvider: Provider {
         guard let account = root.oauthAccount else {
             return SubscriptionStatus(plan: Plan(rawValue: "", displayName: "未登录"), state: .signedOut)
         }
-        return status(from: account)
+        var status = status(from: account)
+        status.usage = Self.usage(from: data, accountUuid: account.accountUuid)
+        return status
+    }
+
+    /// 用量来自 Claude Code 运行时写入的缓存 `cachedUsageUtilization`（见工单 08）。
+    /// 单独解码：缓存格式有问题只影响用量，不影响订阅信息。
+    private static func usage(from data: Data, accountUuid: String?) -> UsageAvailability {
+        let cache: CachedUsage
+        do {
+            guard let decoded = try JSONDecoder().decode(UsageRoot.self, from: data).cachedUsageUtilization else {
+                return .noData
+            }
+            cache = decoded
+        } catch {
+            return .failed("用量缓存格式无法识别")
+        }
+        // 切换账号后缓存可能还是上一个账号的
+        if let accountUuid, let cached = cache.accountUuid, cached != accountUuid {
+            return .noData
+        }
+
+        let known: [(id: String, window: CachedUsage.Window?, minutes: Int, label: String?)] = [
+            ("five_hour", cache.utilization?.fiveHour, 300, nil),
+            ("seven_day", cache.utilization?.sevenDay, 10080, nil),
+            ("seven_day_opus", cache.utilization?.sevenDayOpus, 10080, "每周（Opus）"),
+            ("seven_day_sonnet", cache.utilization?.sevenDaySonnet, 10080, "每周（Sonnet）"),
+        ]
+        let windows = known.compactMap { item -> UsageWindow? in
+            guard let window = item.window, let percent = window.utilization else { return nil }
+            return UsageWindow(
+                id: item.id, windowMinutes: item.minutes, usedPercent: percent,
+                resetsAt: window.resetsAt.flatMap(DateParsing.iso8601), label: item.label)
+        }
+        guard !windows.isEmpty else { return .noData }
+        return .available(Usage(
+            windows: windows,
+            capturedAt: cache.fetchedAtMs.map { Date(timeIntervalSince1970: $0 / 1000) }))
     }
 
     private func status(from account: OAuthAccount) -> SubscriptionStatus {
@@ -117,6 +154,7 @@ private struct Root: Decodable {
 }
 
 private struct OAuthAccount: Decodable {
+    let accountUuid: String?
     let emailAddress: String?
     let organizationName: String?
     let organizationType: String?
@@ -141,6 +179,51 @@ private struct FlexibleDate: Decodable {
             date = DateParsing.iso8601(string)
         } else {
             date = nil
+        }
+    }
+}
+
+/// 只建模 `cachedUsageUtilization` 中的已知窗口；其他字段（内部代号、`extra_usage` 等）忽略。
+private struct UsageRoot: Decodable {
+    let cachedUsageUtilization: CachedUsage?
+}
+
+private struct CachedUsage: Decodable {
+    let fetchedAtMs: Double?
+    let accountUuid: String?
+    let utilization: Utilization?
+
+    struct Utilization: Decodable {
+        let fiveHour: Window?
+        let sevenDay: Window?
+        let sevenDayOpus: Window?
+        let sevenDaySonnet: Window?
+
+        private enum CodingKeys: String, CodingKey {
+            case fiveHour = "five_hour"
+            case sevenDay = "seven_day"
+            case sevenDayOpus = "seven_day_opus"
+            case sevenDaySonnet = "seven_day_sonnet"
+        }
+
+        /// 某个窗口格式不对时只忽略这个窗口。
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            fiveHour = try? container.decodeIfPresent(Window.self, forKey: .fiveHour)
+            sevenDay = try? container.decodeIfPresent(Window.self, forKey: .sevenDay)
+            sevenDayOpus = try? container.decodeIfPresent(Window.self, forKey: .sevenDayOpus)
+            sevenDaySonnet = try? container.decodeIfPresent(Window.self, forKey: .sevenDaySonnet)
+        }
+    }
+
+    struct Window: Decodable {
+        /// 已用比例（%）。
+        let utilization: Double?
+        let resetsAt: String?
+
+        private enum CodingKeys: String, CodingKey {
+            case utilization
+            case resetsAt = "resets_at"
         }
     }
 }

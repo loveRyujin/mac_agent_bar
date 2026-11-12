@@ -1,0 +1,8 @@
+{
+  "oauthAccount": {
+    "accountUuid": "00000000-0000-0000-0000-000000000001",
+    "emailAddress": "team-user@example.com",
+    "organizationType": "claude_pro"
+  },
+  "cachedUsageUtilization": "not an object"
+}

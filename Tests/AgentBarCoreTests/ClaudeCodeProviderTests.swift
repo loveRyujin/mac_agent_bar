@@ -26,7 +26,8 @@ import Testing
             Detail("userRateLimitTier", "default_raven"),
             Detail("hasExtraUsageEnabled", "true"),
         ])
-        #expect(status.usage == .unsupported)
+        // 已登录但没有用量缓存
+        #expect(status.usage == .noData)
     }
 
     @Test func personalMax() async throws {
@@ -104,6 +105,39 @@ import Testing
         await #expect(throws: ProviderError.fileNotFound("~/.claude.json")) {
             try await provider.fetchStatus()
         }
+    }
+
+    @Test func usageFromLocalCache() async throws {
+        let status = try await provider("claude-usage").fetchStatus()
+        let usage = try #require(status.usage.usage)
+
+        #expect(usage.capturedAt == Date(timeIntervalSince1970: 1_794_469_627.588))
+        #expect(usage.windows == [
+            UsageWindow(id: "five_hour", windowMinutes: 300, usedPercent: 80,
+                        resetsAt: DateParsing.iso8601("2026-11-12T11:10:00.490Z")),
+            UsageWindow(id: "seven_day", windowMinutes: 10080, usedPercent: 22,
+                        resetsAt: DateParsing.iso8601("2026-11-14T03:00:00.490Z")),
+            UsageWindow(id: "seven_day_opus", windowMinutes: 10080, usedPercent: 41.5,
+                        resetsAt: DateParsing.iso8601("2026-11-14T03:00:00Z"), label: "每周（Opus）"),
+        ])
+        #expect(usage.windows.map(\.name) == ["5 小时", "每周", "每周（Opus）"])
+        // 订阅信息不受影响
+        #expect(status.plan.displayName == "Team · Standard")
+    }
+
+    @Test func usageCacheFromAnotherAccountIsNoData() async throws {
+        #expect(try await provider("claude-usage-other-account").fetchStatus().usage == .noData)
+    }
+
+    @Test func corruptUsageCacheOnlyAffectsUsage() async throws {
+        let status = try await provider("claude-usage-corrupt").fetchStatus()
+        #expect(status.usage == .failed("用量缓存格式无法识别"))
+        #expect(status.plan.displayName == "Pro")
+        #expect(status.state == .active)
+    }
+
+    @Test func signedOutUsageIsUnsupported() async throws {
+        #expect(try await provider("claude-no-oauth").fetchStatus().usage == .unsupported)
     }
 
     @Test func identity() {

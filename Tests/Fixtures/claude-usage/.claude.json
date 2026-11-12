@@ -1,0 +1,21 @@
+{
+  "oauthAccount": {
+    "accountUuid": "00000000-0000-0000-0000-000000000001",
+    "emailAddress": "team-user@example.com",
+    "seatTier": "team_standard",
+    "organizationType": "claude_team",
+    "organizationName": "Example Org"
+  },
+  "cachedUsageUtilization": {
+    "fetchedAtMs": 1794469627588,
+    "accountUuid": "00000000-0000-0000-0000-000000000001",
+    "utilization": {
+      "five_hour": { "utilization": 80, "resets_at": "2026-11-12T11:10:00.490383+00:00", "limit_dollars": null },
+      "seven_day": { "utilization": 22, "resets_at": "2026-11-14T03:00:00.490410+00:00", "limit_dollars": null },
+      "seven_day_opus": { "utilization": 41.5, "resets_at": "2026-11-14T03:00:00+00:00" },
+      "seven_day_sonnet": null,
+      "tangelo": { "utilization": 99, "resets_at": "2026-11-14T03:00:00+00:00" },
+      "extra_usage": { "is_enabled": true, "monthly_limit": null, "utilization": null, "currency": "USD" }
+    }
+  }
+}

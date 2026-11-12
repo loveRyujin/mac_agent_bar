@@ -1,0 +1,14 @@
+{
+  "oauthAccount": {
+    "accountUuid": "00000000-0000-0000-0000-000000000001",
+    "emailAddress": "team-user@example.com",
+    "organizationType": "claude_team"
+  },
+  "cachedUsageUtilization": {
+    "fetchedAtMs": 1794469627588,
+    "accountUuid": "99999999-9999-9999-9999-999999999999",
+    "utilization": {
+      "five_hour": { "utilization": 80, "resets_at": "2026-11-12T11:10:00+00:00" }
+    }
+  }
+}

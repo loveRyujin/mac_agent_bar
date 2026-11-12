@@ -36,6 +36,11 @@ private func available(_ windows: UsageWindow...) -> UsageAvailability {
         #expect(window(minutes, 0, resets: nil).name == expected)
     }
 
+    @Test func customLabelWins() {
+        #expect(UsageWindow(id: "billing_cycle", windowMinutes: nil, usedPercent: 0, resetsAt: nil,
+                            label: "本计费周期").name == "本计费周期")
+    }
+
     @Test func nameFallsBackToID() {
         #expect(UsageWindow(id: "primary", windowMinutes: nil, usedPercent: 0, resetsAt: nil).name == "primary")
     }
