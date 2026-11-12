@@ -15,16 +15,15 @@ struct AgentBarApp: App {
     }
 }
 
-/// 状态栏：始终显示 AgentBar 的 logo，旁边是选中 agent 的短文字（套餐名或警示）；
-/// 其他 agent 有警示时末尾加小圆点。
+/// 状态栏：始终显示 AgentBar 的 logo，旁边的文字由设置中的状态栏样式决定（见 `WarningRules.statusBarText`）。
 private struct MenuBarLabel: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
         HStack(spacing: 4) {
             AgentIconView(iconName: "agentbar", displayName: "AgentBar")
-            if model.selected != nil {
-                Text((model.statusBarText ?? "") + (model.othersHaveWarning ? " •" : ""))
+            if let text = model.statusBarText {
+                Text(text)
             }
         }
     }

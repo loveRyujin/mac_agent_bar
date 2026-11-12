@@ -71,9 +71,9 @@ private func active(until periodEnd: String?, state: SubscriptionStatus.State = 
     }
 
     @Test func statusBarText() {
-        #expect(rules.statusBarText(for: active(until: nil), now: now) == "Plus")
-        #expect(rules.statusBarText(for: active(until: "2026-11-14T00:00:00Z"), now: now) == "3 天后到期")
-        #expect(rules.statusBarText(for: .failure(.unreadable("x")), now: now) == "读取失败")
+        #expect(rules.statusBarText(for: active(until: nil), othersHaveWarning: false, style: .planName, now: now) == "Plus")
+        #expect(rules.statusBarText(for: active(until: "2026-11-14T00:00:00Z"), othersHaveWarning: false, style: .planName, now: now) == "3 天后到期")
+        #expect(rules.statusBarText(for: .failure(.unreadable("x")), othersHaveWarning: false, style: .planName, now: now) == "读取失败")
     }
 
     @Test func dateFormatting() {

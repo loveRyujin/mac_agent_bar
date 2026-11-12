@@ -11,14 +11,15 @@ public struct Warning: Sendable, Equatable {
     }
 }
 
-/// 警示规则：订阅在 7 天内（按日历天数）到期、已过期、读取失败，三者任一即警示。
+/// 警示规则：订阅在 `warningDays` 天内（按日历天数，默认 7 天）到期、已过期、读取失败，三者任一即警示。
 public struct WarningRules: Sendable {
-    public static let warningDays = 7
-
     public var calendar: Calendar
+    /// 订阅到期提前几天警示（来自设置）。
+    public var warningDays: Int
 
-    public init(calendar: Calendar = .current) {
+    public init(calendar: Calendar = .current, warningDays: Int = AppSettings().expiryWarningDays) {
         self.calendar = calendar
+        self.warningDays = warningDays
     }
 
     public func warning(for outcome: Result<SubscriptionStatus, ProviderError>, now: Date) -> Warning? {
@@ -37,7 +38,7 @@ public struct WarningRules: Sendable {
 
         guard let periodEnd = status.periodEnd else { return nil }
         let days = daysUntil(periodEnd, from: now)
-        guard days <= Self.warningDays else { return nil }
+        guard days <= warningDays else { return nil }
 
         let short = switch days {
         case 0: "今天到期"
@@ -50,11 +51,28 @@ public struct WarningRules: Sendable {
             message: "\(subject)将于 \(formatDate(periodEnd, now: now))到期（\(relativeDays(days))）")
     }
 
-    /// 状态栏文字：有警示时显示警示，否则显示套餐短名称。
-    public func statusBarText(for outcome: Result<SubscriptionStatus, ProviderError>, now: Date) -> String {
-        if let warning = warning(for: outcome, now: now) { return warning.short }
-        guard case .success(let status) = outcome else { return "" }
-        return status.plan.shortName
+    /// 状态栏 logo 旁边的文字；nil 表示只显示 logo。
+    /// - 套餐名模式：选中 agent 有警示时显示警示，否则显示套餐短名称；其他 agent 有警示时末尾加 “ •”。
+    /// - 只显示图标模式：任何 agent 有警示时显示 “•”。
+    /// - Parameter selected: 选中 agent 的结果；没有选中任何 agent 时为 nil。
+    public func statusBarText(
+        for selected: Result<SubscriptionStatus, ProviderError>?,
+        othersHaveWarning: Bool,
+        style: AppSettings.StatusBarStyle,
+        now: Date
+    ) -> String? {
+        guard let selected else { return nil }
+        let selectedWarning = warning(for: selected, now: now)
+        switch style {
+        case .iconOnly:
+            return selectedWarning != nil || othersHaveWarning ? "•" : nil
+        case .planName:
+            var text = selectedWarning?.short ?? ""
+            if selectedWarning == nil, case .success(let status) = selected {
+                text = status.plan.shortName
+            }
+            return othersHaveWarning ? text + " •" : text
+        }
     }
 
     /// 从 `now` 所在的那天到 `date` 所在的那天相差几天（日历天数，可为负）。

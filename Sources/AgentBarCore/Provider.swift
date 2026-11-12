@@ -36,6 +36,11 @@ public enum ProviderError: Error, Sendable, Equatable {
 public struct ProviderResult: Sendable {
     public let provider: any Provider
     public let outcome: Result<SubscriptionStatus, ProviderError>
+
+    /// 隐藏其中出现的邮箱（见 `SubscriptionStatus.redactingEmails()`）。
+    public func redactingEmails() -> ProviderResult {
+        ProviderResult(provider: provider, outcome: outcome.map { $0.redactingEmails() })
+    }
 }
 
 /// 持有所有 provider，负责并发刷新。
@@ -53,12 +58,17 @@ public struct ProviderRegistry: Sendable {
         CursorProvider(),
     ])
 
-    /// 对已安装的 provider 并发调用 `fetchStatus()`。每个 provider 的错误单独捕获，互不影响；
-    /// 结果按注册顺序返回，未安装的 provider 不出现在结果里。
-    public func refreshAll() async -> [ProviderResult] {
-        let installed = providers.filter { $0.isInstalled() }
+    /// 已安装的 provider（包括被用户隐藏的），按注册顺序。设置界面据此列出可以隐藏的 agent。
+    public func installedProviders() -> [any Provider] {
+        providers.filter { $0.isInstalled() }
+    }
+
+    /// 对已安装且未被隐藏的 provider 并发调用 `fetchStatus()`。每个 provider 的错误单独捕获，互不影响；
+    /// 结果按注册顺序返回，未安装或被隐藏的 provider 不出现在结果里。
+    public func refreshAll(hiding hiddenIDs: Set<String> = []) async -> [ProviderResult] {
+        let visible = installedProviders().filter { !hiddenIDs.contains($0.id) }
         return await withTaskGroup(of: (Int, ProviderResult).self) { group in
-            for (index, provider) in installed.enumerated() {
+            for (index, provider) in visible.enumerated() {
                 group.addTask {
                     (index, ProviderResult(provider: provider, outcome: await Self.fetch(provider)))
                 }
