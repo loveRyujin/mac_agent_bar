@@ -69,6 +69,9 @@ public struct ProviderRegistry: Sendable {
         ])
     }
 
+    /// 内置 agent 的 id，插件不能使用。
+    public static var builtInIDs: Set<String> { Set(standard.providers.map(\.id)) }
+
     /// 已安装的 provider（包括被用户隐藏的），按注册顺序。设置界面据此列出可以隐藏的 agent。
     public func installedProviders() -> [any Provider] {
         providers.filter { $0.isInstalled() }
