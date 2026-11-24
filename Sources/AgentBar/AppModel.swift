@@ -1,5 +1,5 @@
 import AgentBarCore
-import Foundation
+import AppKit
 
 /// 界面状态。用 `ObservableObject` 而不是 `@Observable`，以支持 macOS 13。
 @MainActor
@@ -10,6 +10,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var lastRefreshedAt: Date?
     /// 当前显示的 agent（状态栏和面板共用）。
     @Published private(set) var selectedID: String?
+
+    /// 插件文件夹里的插件及其状态（已开启 / 待确认 / 出错）。
+    @Published private(set) var plugins: [PluginItem] = []
 
     /// 用户设置。修改后立即保存并生效。
     @Published var settings: AppSettings {
@@ -31,6 +34,7 @@ final class AppModel: ObservableObject {
     private let defaults: UserDefaults
     private let settingsStore: SettingsStore
     private var refreshLoop: Task<Void, Never>?
+    private var pluginWatcher: PluginFolderWatcher?
 
     private static let preferredKey = "selectedProviderID"
 
@@ -46,6 +50,11 @@ final class AppModel: ObservableObject {
         ledgerStore = NotificationLedgerStore(defaults: defaults)
         ledger = ledgerStore.load()
         launchAtLogin = LaunchAtLogin(defaults: defaults, settings: settings)
+        try? FileManager.default.createDirectory(at: PluginDiscovery.root(), withIntermediateDirectories: true)
+        reloadPlugins(refreshIfChanged: false)
+        pluginWatcher = PluginFolderWatcher(directory: PluginDiscovery.root()) { [weak self] in
+            self?.reloadPlugins()
+        }
         startRefreshLoop(refreshFirst: true)
         // 点击通知：切换到对应 agent 并打开面板
         notifier.onOpen = { [weak self] id in
@@ -77,7 +86,11 @@ final class AppModel: ObservableObject {
             // 重新打开开关：允许再次请求钥匙串授权
             cursorUsage.resetKeychainDenial()
         }
+        if settings.trustedPlugins != old.trustedPlugins {
+            reloadPlugins(refreshIfChanged: false)
+        }
         if settings.hiddenProviderIDs != old.hiddenProviderIDs
+            || settings.trustedPlugins != old.trustedPlugins
             || settings.onlineUsageProviderIDs != old.onlineUsageProviderIDs
             || settings.minimaxUsageViaMmx != old.minimaxUsageViaMmx {
             Task { await refresh() }
@@ -91,9 +104,41 @@ final class AppModel: ObservableObject {
         set { defaults.set(newValue, forKey: Self.preferredKey) }
     }
 
-    /// 按当前设置构建的注册表（是否联网获取用量取决于设置）。
+    /// 按当前设置构建的注册表（是否联网获取用量取决于设置）；只包含用户已确认的插件。
     private var registry: ProviderRegistry {
-        .standard(settings: settings, cursorUsage: cursorUsage, mmx: mmx)
+        .standard(settings: settings, cursorUsage: cursorUsage, mmx: mmx,
+                  plugins: PluginCatalog.enabledProviders(plugins))
+    }
+
+    // MARK: - 插件
+
+    /// 重新扫描插件文件夹。会运行的插件有变化（新确认、内容改动、删除）时重新刷新。
+    func reloadPlugins(refreshIfChanged: Bool = true) {
+        let old = plugins
+        let new = PluginCatalog.load(trusted: settings.trustedPlugins)
+        guard new != old else { return }
+        plugins = new
+        func running(_ items: [PluginItem]) -> [String] {
+            items.filter { $0.state == .enabled }.map { "\($0.id):\($0.fingerprint ?? "")" }
+        }
+        if refreshIfChanged, running(new) != running(old) {
+            Task { await refresh() }
+        }
+    }
+
+    /// 开启时记下用户确认时看到的内容指纹；之后内容一变就需要重新确认。
+    func setPlugin(_ item: PluginItem, enabled: Bool) {
+        if enabled, let fingerprint = item.fingerprint {
+            settings.trustedPlugins[item.id] = fingerprint
+        } else {
+            settings.trustedPlugins.removeValue(forKey: item.id)
+        }
+    }
+
+    func openPluginFolder() {
+        let root = PluginDiscovery.root()
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(root)
     }
 
     var rules: WarningRules {
@@ -117,6 +162,8 @@ final class AppModel: ObservableObject {
     func refresh() async {
         guard !isRefreshing else { return }
         isRefreshing = true
+        // 文件夹监听可能漏掉改动（例如睡眠期间），每次刷新前再扫描一次
+        reloadPlugins(refreshIfChanged: false)
         let results = await registry.refreshAll(hiding: settings.hiddenProviderIDs)
         rawResults = results
         selectedID = Selection.resolve(

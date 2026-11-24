@@ -13,6 +13,15 @@ public struct PluginProvider: Provider {
     public var id: String { manifest.id }
     public var displayName: String { manifest.name }
 
+    /// 插件文件夹里的 `icon.svg` / `icon.pdf` / `icon.png`（按此顺序）。
+    public var iconURL: URL? { Self.iconURL(in: directory) }
+
+    static func iconURL(in directory: URL) -> URL? {
+        ["svg", "pdf", "png"]
+            .map { directory.appendingPathComponent("icon.\($0)") }
+            .first { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
     public init(manifest: PluginManifest, directory: URL,
                 home: URL = FileManager.default.homeDirectoryForCurrentUser) {
         self.manifest = manifest

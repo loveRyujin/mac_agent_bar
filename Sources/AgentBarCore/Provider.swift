@@ -9,12 +9,15 @@ public protocol Provider: Sendable {
     var displayName: String { get }
     /// 图标资源名（界面层据此加载单色 logo）；为 nil 时界面用名称首字母代替。
     var iconName: String? { get }
+    /// 图标文件（插件自带的 SVG / PDF / PNG）；优先于 `iconName`。
+    var iconURL: URL? { get }
     func isInstalled() -> Bool
     func fetchStatus() async throws -> SubscriptionStatus
 }
 
 extension Provider {
     public var iconName: String? { nil }
+    public var iconURL: URL? { nil }
 }
 
 /// provider 读取失败的原因，`message` 可以直接显示在界面上。
@@ -54,10 +57,12 @@ public struct ProviderRegistry: Sendable {
     /// 默认注册表：所有已支持的 agent，按默认设置。新增 agent 只需加在这里。
     public static let standard = standard(settings: AppSettings(), cursorUsage: nil, mmx: MmxClient())
 
-    /// 按设置构建注册表：开启了联网获取用量的 agent 才带上获取器。
-    /// - Parameter mmx: mmx 和 MiniMax Code 共用的 mmx 客户端（同一次刷新只调用一次 mmx）。
+    /// 按设置构建注册表：开启了联网获取用量的 agent 才带上获取器。插件排在内置 agent 之后。
+    /// - Parameters:
+    ///   - mmx: mmx 和 MiniMax Code 共用的 mmx 客户端（同一次刷新只调用一次 mmx）。
+    ///   - plugins: 用户已确认开启的插件（见 `PluginCatalog.enabledProviders`）。
     public static func standard(
-        settings: AppSettings, cursorUsage: CursorUsageFetcher?, mmx: MmxClient
+        settings: AppSettings, cursorUsage: CursorUsageFetcher?, mmx: MmxClient, plugins: [PluginProvider] = []
     ) -> ProviderRegistry {
         let cursorOnline = settings.onlineUsageProviderIDs.contains("cursor")
         return ProviderRegistry(providers: [
@@ -66,7 +71,7 @@ public struct ProviderRegistry: Sendable {
             CursorProvider(usageFetcher: cursorOnline ? cursorUsage : nil),
             MiniMaxCodeProvider(mmx: mmx, fetchesUsage: settings.minimaxUsageViaMmx),
             MmxProvider(client: mmx, fetchesUsage: settings.minimaxUsageViaMmx),
-        ])
+        ] + plugins)
     }
 
     /// 内置 agent 的 id，插件不能使用。

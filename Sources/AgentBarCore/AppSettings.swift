@@ -39,6 +39,8 @@ public struct AppSettings: Sendable, Equatable {
     public var disabledNotificationKinds: Set<NotificationKind> = []
     /// 通过 mmx 获取 MiniMax 用量（mmx 和 MiniMax Code 两个页签共用），默认开启。
     public var minimaxUsageViaMmx = true
+    /// 用户确认开启的插件：id → 确认时的内容指纹（见 `PluginFingerprint`）。内容变化后需要重新确认。
+    public var trustedPlugins: [String: String] = [:]
 
     public init() {}
 }
@@ -47,6 +49,7 @@ extension AppSettings: Codable {
     private enum CodingKeys: String, CodingKey {
         case launchAtLogin, refreshInterval, hiddenProviderIDs, hideEmail, statusBarStyle, expiryWarningDays
         case usageWarningThreshold, onlineUsageProviderIDs, disabledNotificationKinds, minimaxUsageViaMmx
+        case trustedPlugins
     }
 
     /// 缺失或无法识别的字段各自回退到默认值，不影响其他字段。
@@ -66,6 +69,7 @@ extension AppSettings: Codable {
         onlineUsageProviderIDs = value(.onlineUsageProviderIDs, default: onlineUsageProviderIDs)
         disabledNotificationKinds = value(.disabledNotificationKinds, default: disabledNotificationKinds)
         minimaxUsageViaMmx = value(.minimaxUsageViaMmx, default: minimaxUsageViaMmx)
+        trustedPlugins = value(.trustedPlugins, default: trustedPlugins)
     }
 }
 

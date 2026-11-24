@@ -91,7 +91,9 @@ private struct TabButton: View {
 
     var body: some View {
         Button(action: action) {
-            AgentIconView(iconName: result.provider.iconName, displayName: result.provider.displayName, size: 18)
+            AgentIconView(
+                iconName: result.provider.iconName, iconURL: result.provider.iconURL,
+                displayName: result.provider.displayName, size: 18)
                 .frame(width: 32, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: 6)

@@ -6,6 +6,10 @@ struct SettingsView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var launchAtLogin: LaunchAtLogin
     @ObservedObject var notifier: Notifier
+    /// 等待用户确认开启的插件。
+    @State private var pluginToApprove: PluginItem?
+
+    private static let pluginGuide = URL(string: "https://github.com/loveRyujin/mac_agent_bar/blob/main/docs/plugins.md")!
 
     var body: some View {
         Form {
@@ -35,6 +39,21 @@ struct SettingsView: View {
                 Text("显示的 agent")
             } footer: {
                 Text("关掉后，该 agent 不读取、不显示，也不提醒。")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                pluginRows
+                HStack {
+                    Button("打开插件文件夹") { model.openPluginFolder() }
+                    Button("重新加载") { model.reloadPlugins() }
+                    Spacer()
+                    Link("开发指南", destination: Self.pluginGuide)
+                }
+            } header: {
+                Text("插件")
+            } footer: {
+                Text("插件是你自己放进 ~/.config/agentbar/plugins/ 的程序，AgentBar 每次刷新时运行它。新插件和内容有改动的插件，确认后才会运行。")
                     .foregroundStyle(.secondary)
             }
 
@@ -96,6 +115,16 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .alert(
+            pluginToApprove.map(Self.approvalTitle) ?? "",
+            isPresented: Binding(get: { pluginToApprove != nil }, set: { if !$0 { pluginToApprove = nil } }),
+            presenting: pluginToApprove
+        ) { item in
+            Button("开启") { model.setPlugin(item, enabled: true) }
+            Button("取消", role: .cancel) {}
+        } message: { item in
+            Text(Self.approvalMessage(item))
+        }
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
         // 用户可能在系统设置里改过登录项，打开设置窗口时重新读取
@@ -130,11 +159,73 @@ struct SettingsView: View {
                     Label {
                         Text(provider.displayName)
                     } icon: {
-                        AgentIconView(iconName: provider.iconName, displayName: provider.displayName)
+                        AgentIconView(iconName: provider.iconName, iconURL: provider.iconURL, displayName: provider.displayName)
                     }
                 }
             }
         }
+    }
+
+    /// 每个插件一行：图标、名称、状态和开关（清单出错的插件没有开关）。
+    @ViewBuilder
+    private var pluginRows: some View {
+        if model.plugins.isEmpty {
+            Text("还没有插件").foregroundStyle(.secondary)
+        } else {
+            ForEach(model.plugins, id: \.id) { item in
+                HStack {
+                    AgentIconView(iconName: nil, iconURL: item.iconURL, displayName: item.displayName)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.displayName)
+                        pluginStatus(item.state)
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer()
+                    if item.manifest != nil {
+                        Toggle("", isOn: pluginEnabled(item))
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                    }
+                }
+            }
+        }
+    }
+
+    private func pluginStatus(_ state: PluginItem.State) -> Text {
+        switch state {
+        case .enabled: Text("已开启").foregroundColor(.secondary)
+        case .needsApproval(changed: false): Text("新插件，开启前需要确认").foregroundColor(.orange)
+        case .needsApproval(changed: true): Text("内容有改动，需要重新确认").foregroundColor(.orange)
+        case .invalid(let reason): Text("出错：\(reason)").foregroundColor(.red)
+        }
+    }
+
+    /// 打开开关时先弹窗确认，关掉时直接生效。
+    private func pluginEnabled(_ item: PluginItem) -> Binding<Bool> {
+        Binding(
+            get: { item.state == .enabled },
+            set: { enabled in
+                if enabled {
+                    pluginToApprove = item
+                } else {
+                    model.setPlugin(item, enabled: false)
+                }
+            })
+    }
+
+    private static func approvalTitle(_ item: PluginItem) -> String {
+        item.state == .needsApproval(changed: true)
+            ? "插件“\(item.displayName)”有改动，重新开启？"
+            : "开启插件“\(item.displayName)”？"
+    }
+
+    private static func approvalMessage(_ item: PluginItem) -> String {
+        let command = item.manifest?.command.joined(separator: " ") ?? ""
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        var folder = item.directory.path
+        if folder.hasPrefix(home) { folder = "~" + folder.dropFirst(home.count) }
+        return "AgentBar 每次刷新时会以你的身份运行：\n\(command)\n\n位置：\(folder)\n\n插件可以读取你的文件、访问网络。只开启你信任的插件。"
     }
 
     private static func label(for kind: NotificationKind) -> String {
