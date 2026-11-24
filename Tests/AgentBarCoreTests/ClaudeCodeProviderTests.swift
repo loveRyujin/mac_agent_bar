@@ -21,11 +21,6 @@ import Testing
         #expect(status.organization == "Example Org")
         #expect(status.periodEnd == nil)
         #expect(status.sourceUpdatedAt == profileFetchedAt)
-        #expect(status.details == [
-            Detail("billingType", "stripe_subscription"),
-            Detail("userRateLimitTier", "default_raven"),
-            Detail("hasExtraUsageEnabled", "true"),
-        ])
         // 已登录但没有用量缓存
         #expect(status.usage == .noData)
     }
@@ -61,7 +56,6 @@ import Testing
 
         #expect(status.state == .signedOut)
         #expect(status.account == nil)
-        #expect(status.details.isEmpty)
     }
 
     @Test func unknownSeatTierIsShownRaw() async throws {

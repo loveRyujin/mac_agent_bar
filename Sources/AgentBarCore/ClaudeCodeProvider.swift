@@ -84,24 +84,12 @@ public struct ClaudeCodeProvider: Provider {
             state = trialEnd > now() ? .trial : .expired
         }
 
-        var details: [Detail] = []
-        if let billingType = account.billingType {
-            details.append(Detail("billingType", billingType))
-        }
-        if let tier = account.userRateLimitTier {
-            details.append(Detail("userRateLimitTier", tier))
-        }
-        if let extraUsage = account.hasExtraUsageEnabled {
-            details.append(Detail("hasExtraUsageEnabled", String(extraUsage)))
-        }
-
         return SubscriptionStatus(
             plan: plan ?? Plan(rawValue: "", displayName: "未知套餐"),
             state: state,
             account: account.emailAddress,
             organization: account.organizationName,
             periodEnd: periodEnd,
-            details: details,
             sourceUpdatedAt: account.profileFetchedAt.map { Date(timeIntervalSince1970: $0 / 1000) }
         )
     }
@@ -159,9 +147,7 @@ private struct OAuthAccount: Decodable {
     let organizationName: String?
     let organizationType: String?
     let seatTier: String?
-    let billingType: String?
     let userRateLimitTier: String?
-    let hasExtraUsageEnabled: Bool?
     let claudeCodeTrialEndsAt: FlexibleDate?
     /// 毫秒时间戳。
     let profileFetchedAt: Double?

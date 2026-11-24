@@ -51,8 +51,7 @@ public struct CursorProvider: Provider {
         var status = SubscriptionStatus(
             plan: membership.map(Self.plan) ?? Plan(rawValue: "", displayName: "未知套餐"),
             state: state,
-            account: email,
-            details: subscriptionStatus.map { [Detail("stripeSubscriptionStatus", $0)] } ?? []
+            account: email
         )
         await attachUsage(to: &status)
         return status

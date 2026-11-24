@@ -43,8 +43,7 @@ public struct CodexProvider: Provider {
         if auth.authMode != nil || auth.hasAPIKey {
             return SubscriptionStatus(
                 plan: Plan(rawValue: "api_key", displayName: "API key"),
-                state: .active,
-                details: auth.authMode.map { [Detail("auth_mode", $0)] } ?? [])
+                state: .active)
         }
         return SubscriptionStatus(plan: Plan(rawValue: "", displayName: "未登录"), state: .signedOut)
     }
@@ -66,17 +65,11 @@ public struct CodexProvider: Provider {
             state = .active
         }
 
-        var details = [Detail("auth_mode", "chatgpt")]
-        if let start = auth?.activeStart {
-            details.append(Detail("chatgpt_subscription_active_start", start))
-        }
-
         return SubscriptionStatus(
             plan: plan ?? Plan(rawValue: "", displayName: "未知套餐"),
             state: state,
             account: claims.email,
             periodEnd: periodEnd,
-            details: details,
             sourceUpdatedAt: auth?.lastChecked.flatMap(DateParsing.iso8601),
             // 额度快照来自会话日志；读不到只影响用量区
             usage: usageReader.read()
@@ -143,13 +136,11 @@ private struct IDTokenClaims: Decodable {
 
 private struct AuthClaim: Decodable {
     let planType: String?
-    let activeStart: String?
     let activeUntil: String?
     let lastChecked: String?
 
     private enum CodingKeys: String, CodingKey {
         case planType = "chatgpt_plan_type"
-        case activeStart = "chatgpt_subscription_active_start"
         case activeUntil = "chatgpt_subscription_active_until"
         case lastChecked = "chatgpt_subscription_last_checked"
     }

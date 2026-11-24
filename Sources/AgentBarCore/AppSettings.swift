@@ -94,7 +94,7 @@ public struct SettingsStore {
 }
 
 extension SubscriptionStatus {
-    /// 把账号、组织名和详情中出现的邮箱替换成 “•••@•••”（用于“隐藏邮箱”）。
+    /// 把账号和组织名中出现的邮箱替换成 “•••@•••”（用于“隐藏邮箱”）。
     public func redactingEmails() -> SubscriptionStatus {
         func redact(_ text: String) -> String {
             text.replacingOccurrences(
@@ -105,7 +105,6 @@ extension SubscriptionStatus {
         var copy = self
         copy.account = account.map(redact)
         copy.organization = organization.map(redact)
-        copy.details = details.map { Detail($0.label, redact($0.value)) }
         return copy
     }
 }

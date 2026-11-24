@@ -57,7 +57,6 @@ private let proPlusItems = [
         #expect(status.plan == Plan(rawValue: "pro_plus", displayName: "Pro+"))
         #expect(status.state == .active)
         #expect(status.account == "cursor-user@example.com")
-        #expect(status.details == [Detail("stripeSubscriptionStatus", "active")])
     }
 
     @Test func free() async throws {
@@ -69,7 +68,6 @@ private let proPlusItems = [
 
         #expect(status.plan == Plan(rawValue: "free", displayName: "Free"))
         #expect(status.state == .active)
-        #expect(status.details.isEmpty)
     }
 
     @Test func notSignedIn() async throws {
@@ -103,7 +101,6 @@ private let proPlusItems = [
         let status = try await CursorProvider(home: try home(with: items).url).fetchStatus()
 
         #expect(status.state == expected)
-        #expect(status.details == [Detail("stripeSubscriptionStatus", raw)])
     }
 
     @Test func missingMembershipButSignedIn() async throws {

@@ -28,13 +28,10 @@ public struct MmxProvider: Provider {
             throw ProviderError.unreadable(reason)
         case .signedOut:
             return SubscriptionStatus(plan: Plan(rawValue: "", displayName: "未登录"), state: .signedOut)
-        case .signedIn(let method, let tokenExpires):
-            var details = [Detail("method", method)]
-            if let tokenExpires { details.append(Detail("token_expires", tokenExpires)) }
+        case .signedIn(let method):
             return SubscriptionStatus(
                 plan: Self.plan(method: method),
                 state: .active,
-                details: details,
                 usage: fetchesUsage ? Self.ownUsage(await client.quota()) : .networkDisabled)
         }
     }
@@ -90,7 +87,7 @@ public struct MiniMaxCodeProvider: Provider {
     }
 
     public func fetchStatus() async throws -> SubscriptionStatus {
-        guard let region = authenticatedRegion() else {
+        guard isAuthenticated() else {
             return SubscriptionStatus(plan: Plan(rawValue: "", displayName: "未登录"), state: .signedOut)
         }
         let usage: UsageAvailability
@@ -104,28 +101,24 @@ public struct MiniMaxCodeProvider: Provider {
         return SubscriptionStatus(
             plan: Plan(rawValue: "", displayName: "已登录"),
             state: .active,
-            details: [Detail("region", region)],
             usage: usage)
     }
 
-    /// 在 `~/.minimax/auth/prod/<region>/mcode-public/auth-state.json` 中找已登录的区域。
-    private func authenticatedRegion() -> String? {
+    /// 任一区域的 `~/.minimax/auth/prod/<region>/mcode-public/auth-state.json` 是已登录状态。
+    private func isAuthenticated() -> Bool {
         let prod = home.appendingPathComponent(".minimax/auth/prod", isDirectory: true)
-        guard let regions = try? FileManager.default.contentsOfDirectory(atPath: prod.path) else { return nil }
-        for region in regions.sorted() {
+        guard let regions = try? FileManager.default.contentsOfDirectory(atPath: prod.path) else { return false }
+        return regions.contains { region in
             let file = prod.appendingPathComponent("\(region)/mcode-public/auth-state.json")
             guard let data = try? Data(contentsOf: file),
-                  let state = try? JSONDecoder().decode(AuthState.self, from: data),
-                  state.status == "authenticated"
-            else { continue }
-            return state.region ?? region
+                  let state = try? JSONDecoder().decode(AuthState.self, from: data)
+            else { return false }
+            return state.status == "authenticated"
         }
-        return nil
     }
 }
 
 /// `auth-state.json` 中只取非敏感字段。
 private struct AuthState: Decodable {
     let status: String?
-    let region: String?
 }

@@ -19,17 +19,6 @@ public struct Plan: Sendable, Equatable {
     }
 }
 
-/// 在“详情”里原样展示的额外字段。
-public struct Detail: Sendable, Equatable {
-    public var label: String
-    public var value: String
-
-    public init(_ label: String, _ value: String) {
-        self.label = label
-        self.value = value
-    }
-}
-
 /// 某个 agent 当前登录账号的订阅信息。
 public struct SubscriptionStatus: Sendable, Equatable {
     public enum State: String, Sendable, Equatable {
@@ -48,7 +37,6 @@ public struct SubscriptionStatus: Sendable, Equatable {
     public var organization: String?
     /// 到期或下次续费时间。
     public var periodEnd: Date?
-    public var details: [Detail]
     /// 数据源自身的更新时间。
     public var sourceUpdatedAt: Date?
     /// 用量 / 额度；拿不到时说明原因。
@@ -60,7 +48,6 @@ public struct SubscriptionStatus: Sendable, Equatable {
         account: String? = nil,
         organization: String? = nil,
         periodEnd: Date? = nil,
-        details: [Detail] = [],
         sourceUpdatedAt: Date? = nil,
         usage: UsageAvailability = .unsupported
     ) {
@@ -69,7 +56,6 @@ public struct SubscriptionStatus: Sendable, Equatable {
         self.account = account
         self.organization = organization
         self.periodEnd = periodEnd
-        self.details = details
         self.sourceUpdatedAt = sourceUpdatedAt
         self.usage = usage
     }

@@ -19,7 +19,7 @@ public enum MmxError: Error, Sendable, Equatable {
 
 /// `mmx auth status` 的结果。
 public enum MmxAuthStatus: Sendable, Equatable {
-    case signedIn(method: String, tokenExpires: String?)
+    case signedIn(method: String)
     case signedOut
     case failed(String)
 }
@@ -122,7 +122,7 @@ public actor MmxClient {
             return .failed(MmxError.unexpectedFormat.message)
         }
         if let method = response.method {
-            return .signedIn(method: method, tokenExpires: response.tokenExpires)
+            return .signedIn(method: method)
         }
         let message = response.error?.message ?? ""
         if message.range(of: "log", options: .caseInsensitive) != nil {
@@ -239,7 +239,6 @@ private struct QuotaResponse: Decodable {
 
 private struct AuthResponse: Decodable {
     let method: String?
-    let tokenExpires: String?
     let error: ErrorBody?
 
     struct ErrorBody: Decodable {
@@ -248,7 +247,6 @@ private struct AuthResponse: Decodable {
 
     private enum CodingKeys: String, CodingKey {
         case method
-        case tokenExpires = "token_expires"
         case error
     }
 }

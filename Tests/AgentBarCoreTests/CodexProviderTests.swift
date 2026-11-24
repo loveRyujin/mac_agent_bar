@@ -64,7 +64,6 @@ private func date(_ iso: String) -> Date { DateParsing.iso8601(iso)! }
         #expect(status.account == "codex-user@example.com")
         #expect(status.periodEnd == date("2026-11-22T08:06:34Z"))
         #expect(status.sourceUpdatedAt == date("2026-11-11T07:28:41.229Z"))
-        #expect(status.details.contains(Detail("auth_mode", "chatgpt")))
     }
 
     @Test func subscriptionInThePastIsExpired() async throws {

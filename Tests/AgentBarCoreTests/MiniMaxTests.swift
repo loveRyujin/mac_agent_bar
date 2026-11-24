@@ -103,7 +103,7 @@ private func healthyCLI() -> FakeCLI {
 
     @Test func authStatus() async {
         #expect(await client(healthyCLI()).authStatus()
-            == .signedIn(method: "oauth", tokenExpires: "2026-11-19T12:00:00.000Z"))
+            == .signedIn(method: "oauth"))
 
         let loggedOut = #"{"error":{"code":3,"message":"Not logged in. Run: mmx auth login"}}"#
         #expect(await client(FakeCLI(["auth status": .success(loggedOut)])).authStatus() == .signedOut)
@@ -131,7 +131,6 @@ private func healthyCLI() -> FakeCLI {
         #expect(status.state == .active)
         #expect(status.usage.usage?.windows.count == 2)
         #expect(status.usage.usage?.source == nil)  // 自己的数据，不注明来源
-        #expect(status.details == [Detail("method", "oauth"), Detail("token_expires", "2026-11-19T12:00:00.000Z")])
     }
 
     @Test func usageDisabledDoesNotRunQuota() async throws {
@@ -192,7 +191,6 @@ private func healthyCLI() -> FakeCLI {
 
         #expect(status.state == .active)
         #expect(status.plan.displayName == "已登录")
-        #expect(status.details == [Detail("region", "en")])
         #expect(status.usage.usage?.source == "mmx")
         #expect(status.usage.usage?.windows.map(\.name) == ["5 小时", "每周"])
     }
@@ -201,7 +199,6 @@ private func healthyCLI() -> FakeCLI {
         let state = authenticated.replacingOccurrences(of: #""region":"en""#, with: #""region":"cn""#)
         let status = try await provider(try home(authState: state, region: "cn")).fetchStatus()
         #expect(status.state == .active)
-        #expect(status.details == [Detail("region", "cn")])
     }
 
     @Test func notAuthenticated() async throws {

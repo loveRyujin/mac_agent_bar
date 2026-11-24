@@ -111,20 +111,18 @@ private struct StubProvider: Provider {
 }
 
 @Suite struct EmailRedactionTests {
-    @Test func redactsAccountOrganizationAndDetails() {
+    @Test func redactsAccountAndOrganization() {
         let status = SubscriptionStatus(
             plan: Plan(rawValue: "claude_max", displayName: "Max"),
             state: .active,
             account: "max-user@example.com",
-            organization: "max-user@example.com's Organization",
-            details: [Detail("billingType", "stripe_subscription"), Detail("owner", "a.b+c@sub.example.org")]
+            organization: "max-user@example.com's Organization"
         )
 
         let redacted = status.redactingEmails()
 
         #expect(redacted.account == "•••@•••")
         #expect(redacted.organization == "•••@•••'s Organization")
-        #expect(redacted.details == [Detail("billingType", "stripe_subscription"), Detail("owner", "•••@•••")])
         #expect(redacted.plan == status.plan)
     }
 

@@ -149,22 +149,6 @@ private struct AgentDetailView: View {
         }
         UsageSection(usage: status.usage, rules: rules)
         warningLines
-        if !status.details.isEmpty {
-            DisclosureGroup("详情") {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(status.details.enumerated()), id: \.offset) { _, detail in
-                        HStack(alignment: .firstTextBaseline) {
-                            Text(detail.label).foregroundStyle(.secondary)
-                            Spacer()
-                            Text(detail.value).textSelection(.enabled)
-                        }
-                    }
-                }
-                .font(.system(.caption, design: .monospaced))
-                .padding(.top, 2)
-            }
-            .font(.callout)
-        }
         if let updatedAt = status.sourceUpdatedAt {
             Text("数据来源更新于 \(RelativeTime.describe(updatedAt, now: Date()))")
                 .font(.caption)
