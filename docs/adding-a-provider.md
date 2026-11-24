@@ -2,6 +2,8 @@
 
 每个 agent 对应一个 provider：实现 `Provider` 协议，加入注册表，界面不用改。
 
+只是想在自己的 AgentBar 里看到某个 agent，不需要改源码，写一个[插件](plugins.md)即可。本文讲的是把 agent 做成内置支持。
+
 ## 1. 先调研，再写代码
 
 新增 agent 前先弄清楚以下几点，结论交给维护者审核：

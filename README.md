@@ -7,6 +7,7 @@
 ## 功能
 
 - 支持 **Claude Code**、**Codex**、**Cursor**、**MiniMax Code**、**mmx**，自动发现本机已安装的 agent
+- 其他 agent 可以用[插件](docs/plugins.md)接入，并附带一个辅助开发插件的 Agent Skill
 - 显示套餐、订阅状态、到期时间，以及 5 小时、每周等额度窗口的用量和重置时间
 - 状态栏显示 AgentBar 的 logo 和选中 agent 的套餐名、用量或警示；在面板里点击图标切换
 - 快到期、额度快用完、读取失败时在状态栏和面板中提示，并发送系统通知
@@ -34,6 +35,18 @@ xattr -dr com.apple.quarantine /Applications/AgentBar.app
 ```
 
 要求 macOS 13 或更高。Releases 中的安装包只支持 Apple Silicon。
+
+## 插件
+
+内置不支持的 agent 可以写插件接入：`~/.config/agentbar/plugins/` 下的一个文件夹，包含清单和一个打印 JSON 的命令，任何语言都可以。新插件需要在“设置 → 插件”里确认后才会运行。
+
+让 coding agent 帮你写：
+
+```sh
+npx skills add loveRyujin/mac_agent_bar   # 安装插件开发 skill（也可以手动复制 skills/agentbar-plugin）
+```
+
+然后对 Claude Code、Codex 等说“给 AgentBar 写一个 xxx 的插件”。手动开发用 `agentbar plugin new` 和 `agentbar plugin check`，详见 [docs/plugins.md](docs/plugins.md)。
 
 ## 从源码构建
 

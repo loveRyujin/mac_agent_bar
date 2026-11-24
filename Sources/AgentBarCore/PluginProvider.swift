@@ -118,6 +118,8 @@ public struct PluginProvider: Provider {
         let existing = (environment["PATH"] ?? "").split(separator: ":").map(String.init)
         var seen = Set<String>()
         environment["PATH"] = (common + existing).filter { seen.insert($0).inserted }.joined(separator: ":")
+        // 正常运行时就是用户主目录；测试时指向临时目录，示例插件据此读取假数据
+        environment["HOME"] = home.path
         environment["AGENTBAR_PLUGIN_API"] = String(PluginManifest.apiVersion)
         environment["AGENTBAR_PLUGIN_DIR"] = directory.path
         return environment

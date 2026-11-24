@@ -1,0 +1,7 @@
+{
+  "apiVersion": 1,
+  "id": "example-sqlite",
+  "name": "示例：SQLite",
+  "command": ["./status"],
+  "detect": ["~/.example-agent/state.db"]
+}

@@ -1,0 +1,29 @@
+#!/bin/sh
+# AgentBar 示例插件：查询 agent 保存在本地的 SQLite 数据库（很多 Electron / VS Code 系的应用这样存状态）。
+#
+# 用 macOS 自带的 sqlite3。假设 ~/.example-agent/state.db 里有一张键值表：
+#   CREATE TABLE items (key TEXT PRIMARY KEY, value TEXT);
+#   键：email、plan、status、renews_at
+#
+# -readonly：只读打开，不会改动别的应用的数据库。
+# JSON 由 SQLite 的 json_object() 生成，字符串转义不用自己处理。
+# 查询出错时 sqlite3 会把原因写到标准错误并以非零退出，AgentBar 会显示最后一行。
+
+DB="$HOME/.example-agent/state.db"
+if [ ! -f "$DB" ]; then
+  echo '{"error": "找不到 ~/.example-agent/state.db"}'
+  exit 0
+fi
+
+exec /usr/bin/sqlite3 -readonly "$DB" "
+SELECT json_object(
+  'plan',      COALESCE((SELECT value FROM items WHERE key = 'plan'), '未知套餐'),
+  'state',     CASE (SELECT value FROM items WHERE key = 'status')
+                 WHEN 'active'   THEN 'active'
+                 WHEN 'trialing' THEN 'trial'
+                 WHEN 'expired'  THEN 'expired'
+                 ELSE 'unknown'
+               END,
+  'account',   (SELECT value FROM items WHERE key = 'email'),
+  'periodEnd', (SELECT value FROM items WHERE key = 'renews_at')
+);"

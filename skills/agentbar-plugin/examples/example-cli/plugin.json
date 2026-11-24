@@ -1,0 +1,7 @@
+{
+  "apiVersion": 1,
+  "id": "example-cli",
+  "name": "示例：命令行工具",
+  "command": ["python3", "status.py"],
+  "timeoutSeconds": 30
+}

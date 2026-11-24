@@ -1,0 +1,7 @@
+{
+  "apiVersion": 1,
+  "id": "example-json-file",
+  "name": "示例：JSON 文件",
+  "command": ["./status.js"],
+  "detect": ["~/.example-agent/account.json"]
+}
