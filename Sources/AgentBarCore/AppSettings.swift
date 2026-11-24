@@ -33,7 +33,7 @@ public struct AppSettings: Sendable, Equatable {
     public var expiryWarningDays = 7
     /// 额度窗口已用比例达到多少（%）时警示。
     public var usageWarningThreshold = 80
-    /// 允许联网获取用量的 agent（目前只有 Cursor），默认全关。
+    /// 允许联网获取用量的 agent（Cursor、Gemini CLI），默认全关。
     public var onlineUsageProviderIDs: Set<String> = []
     /// 被关闭的通知类型。存“关闭了哪些”，以后新增的类型默认开启。
     public var disabledNotificationKinds: Set<NotificationKind> = []

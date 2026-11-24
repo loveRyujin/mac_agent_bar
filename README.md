@@ -6,13 +6,13 @@
 
 ## 功能
 
-- 支持 **Claude Code**、**Codex**、**Cursor**、**MiniMax Code**、**mmx**，自动发现本机已安装的 agent
+- 支持 **Claude Code**、**Codex**、**Cursor**、**Gemini CLI**、**MiniMax Code**、**mmx**，自动发现本机已安装的 agent
 - 其他 agent 可以用[插件](docs/plugins.md)接入，并附带一个辅助开发插件的 Agent Skill
 - 显示套餐、订阅状态、到期时间，以及 5 小时、每周等额度窗口的用量和重置时间
 - 状态栏显示 AgentBar 的 logo 和选中 agent 的套餐名、用量或警示；在面板里点击图标切换
 - 快到期、额度快用完、读取失败时在状态栏和面板中提示，并发送系统通知
 - 设置：开机自启、刷新间隔、显示哪些 agent、隐藏邮箱、提醒阈值、各类通知开关
-- 不保存、不刷新任何 access token、refresh token 或 API key（见下文“数据来源”）
+- 不保存任何 access token、refresh token 或 API key；除 Gemini CLI 外不刷新凭据（见下文“数据来源”）
 
 ## 安装
 
@@ -65,6 +65,7 @@ scripts/bundle.sh    # 打包成 build/AgentBar.app
 | Claude Code | `~/.claude.json` 中的 `oauthAccount` | 同一文件中 Claude Code 缓存的 `cachedUsageUtilization` |
 | Codex | `~/.codex/auth.json`（在本地解码 `id_token` 中的订阅字段） | 会话日志 `~/.codex/sessions/` 中的额度快照 |
 | Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`（只读打开） | **默认关闭**。在设置中开启后，借用 `cursor-agent` 的登录（钥匙串）向 `api2.cursor.sh` 查询 |
+| Gemini CLI | `~/.gemini/settings.json`（登录方式）、`google_accounts.json`（账号）；开启联网后由 Google 接口给出套餐名 | **默认关闭**。在设置中开启后，借用 Gemini CLI 的登录（`oauth_creds.json`）向 `cloudcode-pa.googleapis.com` 查询各模型额度；登录过期时在内存中刷新，不写回文件 |
 | MiniMax Code | `~/.minimax/auth/…/auth-state.json` 中的登录状态 | 借用 mmx 查到的结果（同一账号） |
 | mmx | `mmx auth status` | `mmx quota show`（由 mmx 自己联网查询） |
 

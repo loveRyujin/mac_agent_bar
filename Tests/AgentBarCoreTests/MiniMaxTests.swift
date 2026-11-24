@@ -244,6 +244,6 @@ private func healthyCLI() -> FakeCLI {
 
     @Test func registryIncludesMiniMaxProviders() {
         let ids = ProviderRegistry.standard.providers.map(\.id)
-        #expect(ids == ["claude-code", "codex", "cursor", "minimax-code", "mmx"])
+        #expect(ids == ["claude-code", "codex", "cursor", "gemini-cli", "minimax-code", "mmx"])
     }
 }

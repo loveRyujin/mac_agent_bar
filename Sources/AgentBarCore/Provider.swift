@@ -62,13 +62,16 @@ public struct ProviderRegistry: Sendable {
     ///   - mmx: mmx 和 MiniMax Code 共用的 mmx 客户端（同一次刷新只调用一次 mmx）。
     ///   - plugins: 用户已确认开启的插件（见 `PluginCatalog.enabledProviders`）。
     public static func standard(
-        settings: AppSettings, cursorUsage: CursorUsageFetcher?, mmx: MmxClient, plugins: [PluginProvider] = []
+        settings: AppSettings, cursorUsage: CursorUsageFetcher?, geminiUsage: GeminiUsageFetcher? = nil,
+        mmx: MmxClient, plugins: [PluginProvider] = []
     ) -> ProviderRegistry {
         let cursorOnline = settings.onlineUsageProviderIDs.contains("cursor")
+        let geminiOnline = settings.onlineUsageProviderIDs.contains("gemini-cli")
         return ProviderRegistry(providers: [
             ClaudeCodeProvider(),
             CodexProvider(),
             CursorProvider(usageFetcher: cursorOnline ? cursorUsage : nil),
+            GeminiCLIProvider(usageFetcher: geminiOnline ? geminiUsage : nil),
             MiniMaxCodeProvider(mmx: mmx, fetchesUsage: settings.minimaxUsageViaMmx),
             MmxProvider(client: mmx, fetchesUsage: settings.minimaxUsageViaMmx),
         ] + plugins)

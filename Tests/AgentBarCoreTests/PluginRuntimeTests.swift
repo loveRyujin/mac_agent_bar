@@ -218,6 +218,6 @@ private func providerError(_ body: () async throws -> Void) async -> ProviderErr
     }
 
     @Test func builtInIDsAreReserved() {
-        #expect(ProviderRegistry.builtInIDs == ["claude-code", "codex", "cursor", "minimax-code", "mmx"])
+        #expect(ProviderRegistry.builtInIDs == ["claude-code", "codex", "cursor", "gemini-cli", "minimax-code", "mmx"])
     }
 }

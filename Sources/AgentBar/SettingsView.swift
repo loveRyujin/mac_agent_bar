@@ -66,11 +66,17 @@ struct SettingsView: View {
                 Toggle("隐藏邮箱（方便截图）", isOn: $model.settings.hideEmail)
             }
 
-            if hasInstalled("cursor") || hasInstalled("mmx") || hasInstalled("minimax-code") {
+            if hasInstalled("cursor") || hasInstalled("gemini-cli") || hasInstalled("mmx") || hasInstalled("minimax-code") {
                 Section {
                     if hasInstalled("cursor") {
                         Toggle("通过 cursor-agent 获取 Cursor 用量", isOn: onlineUsage(of: "cursor"))
                         Text("会读取钥匙串中 cursor-agent 的登录（需要先安装并运行 cursor-agent login），用它向 api2.cursor.sh 请求用量和续费日。第一次以及每次升级 AgentBar 后，系统会请求钥匙串授权。凭据只在内存中使用，不保存、不刷新。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if hasInstalled("gemini-cli") {
+                        Toggle("获取 Gemini CLI 套餐和额度", isOn: onlineUsage(of: "gemini-cli"))
+                        Text("会读取 Gemini CLI 的登录（~/.gemini/oauth_creds.json），用它向 Google（cloudcode-pa.googleapis.com）查询套餐和各模型的额度。登录过期时会在内存中刷新一次，不写回文件，不影响 Gemini CLI 自己的登录。只对 Google 账号登录有效。")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -24,6 +24,8 @@ final class AppModel: ObservableObject {
 
     /// Cursor 用量获取器，与应用同生命周期（记住钥匙串被拒绝的时间、缓存 cursor-agent 版本号）。
     private let cursorUsage = CursorUsageFetcher()
+    /// Gemini 用量获取器，与应用同生命周期（在内存中缓存刷新得到的 access token）。
+    private let geminiUsage = GeminiUsageFetcher()
     /// mmx 客户端，mmx 和 MiniMax Code 两个 provider 共用（同一次刷新只调用一次 mmx）。
     private let mmx = MmxClient()
 
@@ -106,7 +108,7 @@ final class AppModel: ObservableObject {
 
     /// 按当前设置构建的注册表（是否联网获取用量取决于设置）；只包含用户已确认的插件。
     private var registry: ProviderRegistry {
-        .standard(settings: settings, cursorUsage: cursorUsage, mmx: mmx,
+        .standard(settings: settings, cursorUsage: cursorUsage, geminiUsage: geminiUsage, mmx: mmx,
                   plugins: PluginCatalog.enabledProviders(plugins))
     }
 
