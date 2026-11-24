@@ -36,14 +36,27 @@ public struct PluginProvider: Provider {
     }
 
     public func fetchStatus() async throws -> SubscriptionStatus {
+        try await execute().result.get()
+    }
+
+    /// 一次运行的完整结果：除了转换后的订阅信息，还带原始输出（供 `agentbar plugin check` 显示）。
+    public struct Run: Sendable {
+        public var stdout = Data()
+        public var stderr = Data()
+        public var result: Result<SubscriptionStatus, ProviderError>
+        /// 插件自己输出了 `{"error": …}`（格式正确，只是读取失败）。
+        public var isReportedError = false
+    }
+
+    public func execute() async -> Run {
         var command = manifest.command
         if command[0].contains("/") {
             let executable = resolve(command[0])
             guard FileManager.default.fileExists(atPath: executable.path) else {
-                throw ProviderError.unreadable("找不到插件命令 \(command[0])")
+                return Run(result: .failure(.unreadable("找不到插件命令 \(command[0])")))
             }
             guard FileManager.default.isExecutableFile(atPath: executable.path) else {
-                throw ProviderError.unreadable("\(command[0]) 没有可执行权限（运行 chmod +x）")
+                return Run(result: .failure(.unreadable("\(command[0]) 没有可执行权限（运行 chmod +x）")))
             }
             command[0] = executable.path
         }
@@ -53,30 +66,38 @@ public struct PluginProvider: Provider {
             output = try await ProcessRunner.run(
                 command, in: directory, environment: environment(),
                 timeout: TimeInterval(manifest.timeoutSeconds), outputLimit: Self.outputLimit)
-        } catch let failure as ProcessRunner.Failure {
-            switch failure {
-            case .launchFailed(let reason): throw ProviderError.unreadable("插件无法启动：\(reason)")
-            case .timedOut: throw ProviderError.unreadable("插件运行超时（\(manifest.timeoutSeconds) 秒）")
-            case .outputTooLarge: throw ProviderError.unreadable("插件输出超过 \(Self.outputLimit / 1024) KB")
+        } catch {
+            let reason = switch error as? ProcessRunner.Failure {
+            case .launchFailed(let reason): "插件无法启动：\(reason)"
+            case .timedOut: "插件运行超时（\(manifest.timeoutSeconds) 秒）"
+            case .outputTooLarge: "插件输出超过 \(Self.outputLimit / 1024) KB"
+            case nil: "插件无法运行：\(error.localizedDescription)"
             }
+            return Run(result: .failure(.unreadable(reason)))
         }
 
+        var run = Run(stdout: output.stdout, stderr: output.stderr, result: .failure(.unreadable("")))
         guard output.exitCode == 0 else {
             let lastLine = String(decoding: output.stderr, as: UTF8.self)
                 .split(whereSeparator: \.isNewline)
                 .map { $0.trimmingCharacters(in: .whitespaces) }
                 .last { !$0.isEmpty }
-            throw ProviderError.unreadable(lastLine ?? "插件异常退出（退出码 \(output.exitCode)）")
+            run.result = .failure(.unreadable(lastLine ?? "插件异常退出（退出码 \(output.exitCode)）"))
+            return run
         }
 
         do {
             switch try PluginOutput.parse(output.stdout) {
-            case .status(let status): return status
-            case .error(let reason): throw ProviderError.unreadable(reason)
+            case .status(let status):
+                run.result = .success(status)
+            case .error(let reason):
+                run.result = .failure(.unreadable(reason))
+                run.isReportedError = true
             }
-        } catch let error as PluginFormatError {
-            throw ProviderError.unreadable("插件输出格式错误：\(error.message)")
+        } catch {
+            run.result = .failure(.unreadable("插件输出格式错误：\(error.message)"))
         }
+        return run
     }
 
     /// `~/` 开头的相对 home，其他相对路径相对插件文件夹。
@@ -133,19 +154,22 @@ public enum PluginDiscovery {
         return items
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
-            .map { directory in
-                Entry(directory: directory, result: Result { () throws(PluginFormatError) -> PluginManifest in
-                    let file = directory.appendingPathComponent("plugin.json")
-                    guard let data = try? Data(contentsOf: file) else {
-                        throw PluginFormatError(field: nil, "缺少 plugin.json")
-                    }
-                    let manifest = try PluginManifest.parse(data, reservedIDs: reservedIDs)
-                    let folder = directory.lastPathComponent
-                    guard manifest.id == folder else {
-                        throw PluginFormatError(field: "id", "应与文件夹名 \"\(folder)\" 一致，实际是 \"\(manifest.id)\"")
-                    }
-                    return manifest
-                })
+            .map { Entry(directory: $0, result: load($0, reservedIDs: reservedIDs)) }
+    }
+
+    /// 读取并校验一个插件文件夹的清单；文件夹名必须与 `id` 一致。
+    public static func load(_ directory: URL, reservedIDs: Set<String>) -> Result<PluginManifest, PluginFormatError> {
+        Result { () throws(PluginFormatError) -> PluginManifest in
+            let file = directory.appendingPathComponent("plugin.json")
+            guard let data = try? Data(contentsOf: file) else {
+                throw PluginFormatError(field: nil, "缺少 plugin.json")
             }
+            let manifest = try PluginManifest.parse(data, reservedIDs: reservedIDs)
+            let folder = directory.standardizedFileURL.lastPathComponent
+            guard manifest.id == folder else {
+                throw PluginFormatError(field: "id", "应与文件夹名 \"\(folder)\" 一致，实际是 \"\(manifest.id)\"")
+            }
+            return manifest
+        }
     }
 }

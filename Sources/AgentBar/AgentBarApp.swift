@@ -1,7 +1,6 @@
 import AgentBarCore
 import SwiftUI
 
-@main
 struct AgentBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var model = AppModel()
