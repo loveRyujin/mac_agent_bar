@@ -2,8 +2,8 @@
 class Agentbar < Formula
   desc "Menu bar app showing subscription and usage of local AI coding agents"
   homepage "https://github.com/loveRyujin/mac_agent_bar"
-  url "https://github.com/loveRyujin/mac_agent_bar/archive/refs/tags/v0.2.0.tar.gz"
-  sha256 "01016c10aac356ca62cad82f06c84a0f35a620370a5e46f8f0f1baf4a02c1a73"
+  url "https://github.com/loveRyujin/mac_agent_bar/archive/refs/tags/v0.3.0.tar.gz"
+  sha256 "fee5bac87d8c0f73379f85fc8b1fa947602a4249c9dcfcb40e34692747a16ab4"
   license "MIT"
 
   depends_on macos: :ventura
@@ -12,8 +12,12 @@ class Agentbar < Formula
     # Homebrew 已在沙盒中构建，SwiftPM 自己的沙盒会和它冲突，需要关闭
     system "scripts/bundle.sh", "--disable-sandbox", "--output", buildpath/"out"
     prefix.install buildpath/"out/AgentBar.app"
+    # `agentbar plugin …` 是开发插件用的命令行工具，其他情况打开应用
     (bin/"agentbar").write <<~SH
       #!/bin/sh
+      if [ "$1" = "plugin" ]; then
+        exec "#{opt_prefix}/AgentBar.app/Contents/MacOS/AgentBar" "$@"
+      fi
       exec open "#{opt_prefix}/AgentBar.app" "$@"
     SH
   end
@@ -21,6 +25,7 @@ class Agentbar < Formula
   def caveats
     <<~EOS
       用 `agentbar` 命令打开 AgentBar（应用位于 #{opt_prefix}/AgentBar.app）。
+      开发插件：`agentbar plugin help`。
       想在启动台或“应用程序”里看到它，可以手动链接：
         ln -sf #{opt_prefix}/AgentBar.app ~/Applications/AgentBar.app
 
@@ -33,5 +38,6 @@ class Agentbar < Formula
   test do
     assert_predicate prefix/"AgentBar.app/Contents/MacOS/AgentBar", :executable?
     assert_match "LSUIElement", (prefix/"AgentBar.app/Contents/Info.plist").read
+    assert_match "agentbar plugin check", shell_output("#{bin}/agentbar plugin help")
   end
 end
